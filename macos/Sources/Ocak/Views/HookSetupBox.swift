@@ -16,7 +16,7 @@ struct HookSetupBox: View {
     private var needsOpenCode: Bool { !HookInstaller.isOpenCodeHooksInstalled() }
 
     var body: some View {
-        if isIgnored || isDismissed {
+        if isIgnored || isDismissed || (!needsClaude && !needsOpenCode) {
             EmptyView()
         } else {
             VStack(alignment: .leading, spacing: 12) {

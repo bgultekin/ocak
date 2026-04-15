@@ -111,4 +111,22 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-echo "Done. App bundle: $APP_BUNDLE"
+echo "App bundle: $APP_BUNDLE"
+
+DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
+DMG_STAGING="$DIST_DIR/dmg-staging"
+
+echo "Creating $DMG_PATH..."
+rm -rf "$DMG_STAGING" "$DMG_PATH"
+mkdir -p "$DMG_STAGING"
+cp -R "$APP_BUNDLE" "$DMG_STAGING/"
+ln -s /Applications "$DMG_STAGING/Applications"
+
+hdiutil create \
+  -volname "$APP_NAME" \
+  -srcfolder "$DMG_STAGING" \
+  -ov -format ULFO \
+  "$DMG_PATH"
+
+rm -rf "$DMG_STAGING"
+echo "Done. DMG: $DMG_PATH"

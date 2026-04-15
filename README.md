@@ -20,6 +20,16 @@
 
 Ocak lives in your menu bar and hides a terminal drawer just off the right edge of your screen. Pull it out with a keystroke or a nudge of the mouse, run Claude Code, OpenCode, or whatever shell you want, and let Ocak track what each terminal is doing in the background.
 
+## Installation
+
+Grab the latest build from the [releases page](https://github.com/bgultekin/ocak/releases/latest):
+
+1. Download `Ocak.dmg` from the latest release.
+2. Open it and drag `Ocak.app` into `/Applications`.
+3. Launch it. Ocak runs as a menu bar accessory — look for the icon in the top-right of your screen.
+
+Requires macOS 14 (Sonoma) or newer. Prefer to build it yourself? See [Build from source](#build-from-source) below.
+
 ## Features
 
 ### Slide-out drawer
