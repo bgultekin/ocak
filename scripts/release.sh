@@ -49,10 +49,16 @@ fi
 
 # --- Create draft GitHub release ---
 echo "Creating draft GitHub release $TAG..."
+PREV_TAG=$(git -C "$REPO_ROOT" tag --sort=-version:refname | grep -v "^$TAG$" | head -1)
+NOTES_ARGS=("--generate-notes")
+if [ -n "$PREV_TAG" ]; then
+    NOTES_ARGS+=("--notes-start-tag" "$PREV_TAG")
+fi
+
 gh release create "$TAG" \
     --draft \
     --title "Ocak $VERSION" \
-    --generate-notes \
+    "${NOTES_ARGS[@]}" \
     "$DMG_PATH#Ocak.dmg"
 
 echo "Done. Draft release $TAG created — publish it when ready."
