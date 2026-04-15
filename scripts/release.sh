@@ -27,6 +27,16 @@ if ! gh auth status &> /dev/null; then
     exit 1
 fi
 
+# --- Tag ---
+if git -C "$REPO_ROOT" tag | grep -qx "$TAG"; then
+    echo "Error: tag $TAG already exists locally. Delete it first: git tag -d $TAG"
+    exit 1
+fi
+
+echo "Creating and pushing tag $TAG..."
+git -C "$REPO_ROOT" tag "$TAG"
+git -C "$REPO_ROOT" push origin "$TAG"
+
 # --- Build ---
 echo "Building Ocak $VERSION..."
 APP_VERSION="$VERSION" "$SCRIPT_DIR/build-macos-app.sh"
