@@ -1,0 +1,82 @@
+{
+  "name": "ocak",
+  "description": "Ocak session tracking hooks for Claude Code",
+  "version": "1.0.0",
+  "author": {
+    "name": "Bilal"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ -z \"$OCAK_SESSION_ID\" ] && exit 0; INPUT=$(cat); BODY=$(echo \"$INPUT\" | python3 -c \"import sys, json; data = json.load(sys.stdin); data[\\\"ocak_session_id\\\"] = \\\"$OCAK_SESSION_ID\\\"; print(json.dumps(data))\"); curl -sf -X POST http://localhost:27832/hook -H \"Content-Type: application/json\" -d \"$BODY\" || true'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ -z \"$OCAK_SESSION_ID\" ] && exit 0; INPUT=$(cat); BODY=$(echo \"$INPUT\" | python3 -c \"import sys, json; data = json.load(sys.stdin); data[\\\"ocak_session_id\\\"] = \\\"$OCAK_SESSION_ID\\\"; print(json.dumps(data))\"); curl -sf -X POST http://localhost:27832/hook -H \"Content-Type: application/json\" -d \"$BODY\" || true'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ -z \"$OCAK_SESSION_ID\" ] && exit 0; INPUT=$(cat); BODY=$(echo \"$INPUT\" | python3 -c \"import sys, json; data = json.load(sys.stdin); data[\\\"ocak_session_id\\\"] = \\\"$OCAK_SESSION_ID\\\"; print(json.dumps(data))\"); curl -sf -X POST http://localhost:27832/hook -H \"Content-Type: application/json\" -d \"$BODY\" || true'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ -z \"$OCAK_SESSION_ID\" ] && exit 0; INPUT=$(cat); BODY=$(echo \"$INPUT\" | python3 -c \"import sys, json; data = json.load(sys.stdin); data[\\\"ocak_session_id\\\"] = \\\"$OCAK_SESSION_ID\\\"; print(json.dumps(data))\"); curl -sf -X POST http://localhost:27832/hook -H \"Content-Type: application/json\" -d \"$BODY\" || true'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ -z \"$OCAK_SESSION_ID\" ] && exit 0; INPUT=$(cat); BODY=$(echo \"$INPUT\" | python3 -c \"import sys, json; data = json.load(sys.stdin); data[\\\"ocak_session_id\\\"] = \\\"$OCAK_SESSION_ID\\\"; print(json.dumps(data))\"); curl -sf -X POST http://localhost:27832/hook -H \"Content-Type: application/json\" -d \"$BODY\" || true'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ -z \"$OCAK_SESSION_ID\" ] && exit 0; INPUT=$(cat); BODY=$(echo \"$INPUT\" | python3 -c \"import sys, json; data = json.load(sys.stdin); data[\\\"ocak_session_id\\\"] = \\\"$OCAK_SESSION_ID\\\"; print(json.dumps(data))\"); curl -sf -X POST http://localhost:27832/hook -H \"Content-Type: application/json\" -d \"$BODY\" || true'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

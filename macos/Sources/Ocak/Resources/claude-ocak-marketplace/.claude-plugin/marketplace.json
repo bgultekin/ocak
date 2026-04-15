@@ -1,0 +1,13 @@
+{
+  "name": "ocak-plugins",
+  "owner": {
+    "name": "Bilal"
+  },
+  "plugins": [
+    {
+      "name": "ocak",
+      "source": "./plugins/ocak",
+      "description": "Ocak session tracking hooks for Claude Code"
+    }
+  ]
+}
