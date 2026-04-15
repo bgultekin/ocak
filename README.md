@@ -66,6 +66,10 @@ Default is `Cmd+Option+O`, but you can bind it to whatever combination fits your
 
 Turn on status tracking from the settings pane with a single click. No config files to hand-edit.
 
+### Auto start at login
+
+Flip a switch in settings and Ocak launches itself when you log in, ready in the menu bar before you need it.
+
 ## Getting Started
 
 ### Requirements
