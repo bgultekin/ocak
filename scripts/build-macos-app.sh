@@ -8,6 +8,9 @@ APP_NAME="Ocak"
 APP_BUNDLE="$REPO_ROOT/.dist/$APP_NAME.app"
 DIST_DIR="$REPO_ROOT/.dist"
 
+# Version can be overridden at build time: APP_VERSION=1.2.3 ./scripts/build-macos-app.sh
+APP_VERSION="${APP_VERSION:-0.1.0}"
+
 echo "Building release binaries for Apple Silicon and Intel..."
 cd "$SPM_DIR"
 
@@ -73,8 +76,8 @@ sips -z 1024 1024 "$ICON_DARK" --out "$ICONSET_DIR/icon_512x512@2x~dark.png" > /
 iconutil -c icns "$ICONSET_DIR" -o "$APP_BUNDLE/Contents/Resources/AppIcon.icns"
 rm -rf "$ICONSET_DIR"
 
-# Write Info.plist
-cat > "$APP_BUNDLE/Contents/Info.plist" <<'PLIST'
+# Write Info.plist (version values come from APP_VERSION / APP_BUILD above)
+cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -94,7 +97,7 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<'PLIST'
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>$APP_VERSION</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>
