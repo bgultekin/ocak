@@ -32,7 +32,7 @@ Requires macOS 14+ and Swift 5.9+. Dependencies (SwiftTerm, KeyboardShortcuts) r
 
 ### App Lifecycle
 - **No visible main window.** `OcakApp` uses `NSApplicationDelegateAdaptor` with `.accessory` activation policy. All UI is managed by `AppDelegate` through custom `NSPanel` subclasses.
-- **AppDelegate** orchestrates everything: ribbon panel, drawer panel, edge detection (hover-to-reveal), status bar menu, keyboard shortcut (Cmd+Option+O), hook server, and process watcher.
+- **AppDelegate** orchestrates everything: ribbon panel, drawer panel, edge detection (hover-to-reveal), status bar menu, keyboard shortcut (Cmd+Control+O), hook server, and process watcher.
 
 ### Panel System (macos/Sources/Ocak/Panels/)
 - **FloatingPanel** — always-visible, non-activating overlay used for the edge ribbon.

@@ -3,7 +3,7 @@ import SwiftUI
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
-    static let togglePanel = Self("togglePanel", default: .init(.o, modifiers: [.command, .option]))
+    static let togglePanel = Self("togglePanel", default: .init(.o, modifiers: [.command, .control]))
 }
 
 @MainActor
