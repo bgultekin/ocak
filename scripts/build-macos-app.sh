@@ -35,8 +35,10 @@ lipo -create \
   -output "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
 # Copy SPM resource bundle from arm64 build (architecture-independent)
+# SPM's generated Bundle.module accessor looks for the bundle at Bundle.main.bundleURL
+# (i.e. Ocak.app/) — not in Contents/Resources/. Place it where the accessor expects it.
 if [ -d "$ARM_BUILD_DIR/${APP_NAME}_${APP_NAME}.bundle" ]; then
-    cp -R "$ARM_BUILD_DIR/${APP_NAME}_${APP_NAME}.bundle" "$APP_BUNDLE/Contents/Resources/"
+    cp -R "$ARM_BUILD_DIR/${APP_NAME}_${APP_NAME}.bundle" "$APP_BUNDLE/"
 fi
 
 # Create app icon (AppIcon.icns) from assets
