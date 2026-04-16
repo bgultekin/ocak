@@ -28,7 +28,7 @@ https://github.com/user-attachments/assets/f67ad1a7-5184-4b12-b886-2f730066284a
 
 ---
 
-## Installation
+## Quick Start
 
 Grab the latest build from the [releases page](https://github.com/bgultekin/ocak/releases/latest):
 
@@ -36,7 +36,12 @@ Grab the latest build from the [releases page](https://github.com/bgultekin/ocak
 2. Open it and drag `Ocak.app` into `/Applications`.
 3. Launch it. Ocak runs as a menu bar accessory — look for the icon in the top-right of your screen.
 
-Requires macOS 14 (Sonoma) or newer. Prefer to build it yourself? See [Build from source](#build-from-source) below.
+Prefer to build it yourself? See [Build from source](#build-from-source) below.
+
+### Requirements
+
+- macOS 14 (Sonoma) or newer
+- Swift 5.9+ toolchain (Xcode 15 or the command-line tools)
 
 ## Features
 
@@ -88,14 +93,7 @@ Turn on status tracking from the settings pane with a single click. No config fi
 
 Flip a switch in settings and Ocak launches itself when you log in, ready in the menu bar before you need it.
 
-## Getting Started
-
-### Requirements
-
-- macOS 14 (Sonoma) or newer
-- Swift 5.9+ toolchain (Xcode 15 or the command-line tools)
-
-### Build from source
+## Build from source
 
 ```bash
 git clone https://github.com/bgultekin/ocak.git
@@ -106,7 +104,7 @@ swift run -c release
 
 Dependencies resolve automatically through Swift Package Manager.
 
-### Run tests
+## Run tests
 
 ```bash
 swift test
@@ -114,16 +112,6 @@ swift test --filter OcakTests.HookInstallerTests
 ```
 
 Tests are written against [Swift Testing](https://developer.apple.com/xcode/swift-testing/), not XCTest.
-
-## Usage
-
-1. Launch Ocak. It runs as a menu bar accessory — there is no dock icon.
-2. Press `Cmd+Control+O`, or push the cursor against the right edge of the screen, to open the drawer.
-3. Create a group pointing at a project directory.
-4. Add a terminal inside the group and run `claude` (or `opencode`, or anything else you like).
-5. Watch the status indicators in the terminal list flip between **working**, **needs input**, and **done** as Claude runs.
-
-Install the Claude Code plugin from the **Plugin** tab in settings if you want the status tracking to light up.
 
 ## Architecture at a glance
 
