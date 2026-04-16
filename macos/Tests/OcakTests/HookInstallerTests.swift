@@ -42,9 +42,14 @@ struct HookInstallerTests {
         #expect(try firstCommand().contains("http://localhost:27832/hook"))
     }
 
-    @Test("plugin.json command injects ocak_session_id")
-    func pluginJson_commandInjectsSessionId() throws {
-        #expect(try firstCommand().contains("ocak_session_id"))
+    @Test("plugin.json command sends session ID via X-Ocak-Session header")
+    func pluginJson_commandSendsSessionHeader() throws {
+        #expect(try firstCommand().contains("X-Ocak-Session: $OCAK_SESSION_ID"))
+    }
+
+    @Test("plugin.json command pipes stdin directly to curl")
+    func pluginJson_commandPipesStdin() throws {
+        #expect(try firstCommand().contains("-d @-"))
     }
 
     // MARK: - Helpers

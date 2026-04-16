@@ -11,12 +11,14 @@ function sendEvent(eventName, cwd) {
     hook_event_name: eventName,
     session_id: "",
     cwd: cwd || "",
-    ocak_session_id: ocakId,
   })
 
   fetch(OCAK_HOOK_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Ocak-Session": ocakId,
+    },
     body,
   }).catch(() => {})
 }
