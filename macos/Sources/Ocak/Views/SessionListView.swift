@@ -4,9 +4,11 @@ import AppKit
 extension Image {
     static func ocakIcon(active: Bool) -> Image {
         let name = active ? "ocak-menubar-icon-active" : "ocak-menubar-icon-default"
-        let url = Bundle.module.url(forResource: name, withExtension: "png")!
-        let nsImage = NSImage(contentsOf: url)!
-        return Image(nsImage: nsImage)
+        if let url = Bundle.module.url(forResource: name, withExtension: "png"),
+           let nsImage = NSImage(contentsOf: url) {
+            return Image(nsImage: nsImage)
+        }
+        return Image(systemName: "terminal")
     }
 }
 
