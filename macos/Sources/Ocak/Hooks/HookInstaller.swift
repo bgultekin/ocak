@@ -1,5 +1,4 @@
 import Foundation
-import Darwin
 
 /// Registers Ocak's bundled Claude Code plugin via `claude plugin marketplace add` + `claude plugin install`,
 /// and copies the OpenCode plugin to ~/.config/opencode/plugins/.
@@ -98,30 +97,6 @@ enum HookInstaller {
     private static func runShell(_ command: String, loginPath: String?) throws -> String {
         print("[Ocak] Running: \(command)")
 
-        // Create master PTY
-        let masterPty = posix_openpt(O_RDWR | O_NOCTTY)
-        guard masterPty > 0 else {
-            throw InstallError.commandFailed("Failed to open PTY")
-        }
-        guard grantpt(masterPty) == 0, unlockpt(masterPty) == 0 else {
-            close(masterPty)
-            throw InstallError.commandFailed("Failed to configure PTY")
-        }
-
-        // Set master PTY to non-blocking
-        _ = fcntl(masterPty, F_SETFL, fcntl(masterPty, F_GETFL) | O_NONBLOCK)
-
-        // Get slave device path and open it for the child process
-        guard let slaveName = ptsname(masterPty) else {
-            close(masterPty)
-            throw InstallError.commandFailed("Failed to get PTY slave name")
-        }
-        let slavePty = open(slaveName, O_RDWR)
-        guard slavePty > 0 else {
-            close(masterPty)
-            throw InstallError.commandFailed("Failed to open PTY slave")
-        }
-
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/bin/zsh")
         proc.arguments = ["-l", "-c", command]
@@ -133,54 +108,51 @@ enum HookInstaller {
             env["PATH"] = loginPath ?? defaultPath
         }
         proc.environment = env
-        proc.standardInput = FileHandle(fileDescriptor: dup(slavePty), closeOnDealloc: true)
-        proc.standardOutput = FileHandle(fileDescriptor: dup(slavePty), closeOnDealloc: true)
-        proc.standardError = FileHandle(fileDescriptor: dup(slavePty), closeOnDealloc: true)
+
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        proc.standardInput = FileHandle.nullDevice
+        proc.standardOutput = stdoutPipe
+        proc.standardError = stderrPipe
         try proc.run()
-        close(slavePty)
 
-        var output = ""
-        var buffer = [UInt8](repeating: 0, count: 4096)
-        let deadline = Date().addingTimeInterval(60)
+        // Read stdout and stderr concurrently to avoid pipe buffer deadlocks
+        var stdoutData = Data()
+        var stderrData = Data()
+        let stdoutHandle = stdoutPipe.fileHandleForReading
+        let stderrHandle = stderrPipe.fileHandleForReading
 
-        while proc.isRunning && Date() < deadline {
-            let bytesRead = read(masterPty, &buffer, buffer.count)
-            if bytesRead > 0 {
-                if let text = String(bytes: buffer[..<bytesRead], encoding: .utf8) {
-                    print(text, terminator: "")
-                    output += text
-                }
-            } else if bytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK {
-                break
-            }
-            usleep(50_000) // 50ms poll interval
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global().async {
+            stdoutData = stdoutHandle.readDataToEndOfFile()
+            group.leave()
+        }
+        group.enter()
+        DispatchQueue.global().async {
+            stderrData = stderrHandle.readDataToEndOfFile()
+            group.leave()
         }
 
-        // Drain remaining with timeout
-        while Date() < deadline {
-            let bytesRead = read(masterPty, &buffer, buffer.count)
-            if bytesRead > 0 {
-                if let text = String(bytes: buffer[..<bytesRead], encoding: .utf8) {
-                    print(text, terminator: "")
-                    output += text
-                }
-            } else {
-                break
-            }
-        }
-
-        close(masterPty)
-
-        if proc.isRunning {
+        let deadline: DispatchTime = .now() + 60
+        if group.wait(timeout: deadline) == .timedOut {
             proc.terminate()
+            proc.waitUntilExit()
+            throw InstallError.commandFailed("Command timed out after 60s")
         }
+
         proc.waitUntilExit()
+
+        let stdoutStr = String(data: stdoutData, encoding: .utf8) ?? ""
+        let stderrStr = String(data: stderrData, encoding: .utf8) ?? ""
+        let output = (stdoutStr + stderrStr).trimmingCharacters(in: .whitespacesAndNewlines)
+        if !output.isEmpty { print(output) }
         print("[Ocak] Exit code: \(proc.terminationStatus)")
 
         if proc.terminationStatus != 0 {
-            throw InstallError.commandFailed(output.trimmingCharacters(in: .whitespacesAndNewlines))
+            throw InstallError.commandFailed(output)
         }
-        return output
+        return stdoutStr
     }
 
     private static func getLoginPath() -> String? {
