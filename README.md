@@ -78,7 +78,7 @@ Independent controls for the app's appearance and the terminal's colors. Separat
 
 ### Your shortcut, your rules
 
-Default is `Cmd+Option+O`, but you can bind it to whatever combination fits your muscle memory.
+Default is `Cmd+Control+O`, but you can bind it to whatever combination fits your muscle memory.
 
 ### One-click setup
 
@@ -118,7 +118,7 @@ Tests are written against [Swift Testing](https://developer.apple.com/xcode/swif
 ## Usage
 
 1. Launch Ocak. It runs as a menu bar accessory — there is no dock icon.
-2. Press `Cmd+Option+O`, or push the cursor against the right edge of the screen, to open the drawer.
+2. Press `Cmd+Control+O`, or push the cursor against the right edge of the screen, to open the drawer.
 3. Create a group pointing at a project directory.
 4. Add a terminal inside the group and run `claude` (or `opencode`, or anything else you like).
 5. Watch the status indicators in the terminal list flip between **working**, **needs input**, and **done** as Claude runs.
