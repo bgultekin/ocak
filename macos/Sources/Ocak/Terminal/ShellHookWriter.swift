@@ -62,7 +62,8 @@ enum ShellHookWriter {
             [[ -z $OCAK_SESSION_ID ]] && return
             curl -sf -X POST http://localhost:27832/hook \\
                 -H "Content-Type: application/json" \\
-                -d "{\\"hook_event_name\\":\\"$1\\",\\"ocak_session_id\\":\\"$OCAK_SESSION_ID\\"}" \\
+                -H "X-Ocak-Session: $OCAK_SESSION_ID" \\
+                -d "{\\"hook_event_name\\":\\"$1\\"}" \\
                 >/dev/null 2>&1
         }
         __ocak_cmd_preexec() {
@@ -136,7 +137,8 @@ enum ShellHookWriter {
             [ -z "$OCAK_SESSION_ID" ] && return
             ( curl -sf -X POST http://localhost:27832/hook \\
                 -H "Content-Type: application/json" \\
-                -d "{\\"hook_event_name\\":\\"$1\\",\\"ocak_session_id\\":\\"$OCAK_SESSION_ID\\"}" \\
+                -H "X-Ocak-Session: $OCAK_SESSION_ID" \\
+                -d "{\\"hook_event_name\\":\\"$1\\"}" \\
                 >/dev/null 2>&1 & ) 2>/dev/null
         }
         __ocak_in_cmd=0
