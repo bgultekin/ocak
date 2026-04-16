@@ -36,6 +36,8 @@ Grab the latest build from the [releases page](https://github.com/bgultekin/ocak
 2. Open it and drag `Ocak.app` into `/Applications`.
 3. Launch it. Ocak runs as a menu bar accessory — look for the icon in the top-right of your screen.
 
+Releases are not signed. You may need to visit `Settings` > `Privacy & Security` and click `Open Anyway`. 
+
 Prefer to build it yourself? See [Build from source](#build-from-source) below.
 
 ### Requirements
