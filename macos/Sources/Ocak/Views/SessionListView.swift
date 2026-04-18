@@ -268,6 +268,7 @@ struct SessionGroupListView: View {
             if !group.isCollapsed || isEditingSettings {
                 dividerLine
                 contentArea
+                    .transition(.opacity)
             }
         }
         .padding(12)
@@ -480,7 +481,7 @@ struct SessionGroupListView: View {
                     draggedSession: $draggedSession,
                     dropTargetGroupID: $dropTargetGroupID
                 )
-                .transition(.move(edge: .leading).combined(with: .opacity))
+                .transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.2), value: sessions.map { $0.id })
