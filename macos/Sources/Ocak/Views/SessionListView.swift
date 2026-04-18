@@ -290,7 +290,7 @@ struct SessionGroupListView: View {
                     Image(systemName: group.isCollapsed ? "chevron.right" : "chevron.down")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(OcakTheme.sectionLabel)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 24, height: 24)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
