@@ -1,6 +1,23 @@
 import AppKit
 import SwiftUI
 
+/// NSHostingView subclass that forces a redraw on every layout pass. This works around a
+/// SwiftUI-in-transparent-NSPanel bug where shrinking subviews leave stale pixels behind
+/// (visible as ghost rectangles) until the next user interaction invalidates the window.
+///
+/// Trade-off: `layout()` fires during most SwiftUI animations (collapse, drag hover,
+/// scroll, resize), so we accept a small overdraw cost everywhere in exchange for a
+/// single correctness fix. `needsDisplay = true` just flags the view dirty for the next
+/// display cycle — SwiftUI already owns the actual drawing — so the real cost is the
+/// window compositing pass, which is cheap for a single drawer-sized region.
+final class RedrawingHostingView<V: View>: NSHostingView<V> {
+    override func layout() {
+        super.layout()
+        needsDisplay = true
+        window?.invalidateShadow()
+    }
+}
+
 /// An edge-anchored frosted glass panel backed by NSVisualEffectView.
 final class DrawerPanel: NSPanel {
     private let ribbonWidth: CGFloat = 5
@@ -40,6 +57,7 @@ final class DrawerPanel: NSPanel {
         let bg = NSView()
         bg.wantsLayer = true
         bg.layer?.backgroundColor = NSColor.clear.cgColor
+        bg.layerContentsRedrawPolicy = .duringViewResize
         bg.autoresizingMask = [.width, .height]
         contentView = bg
     }
@@ -47,9 +65,10 @@ final class DrawerPanel: NSPanel {
     /// Host a SwiftUI view inside the clear backing.
     func setSwiftUIContent<V: View>(_ view: V) {
         guard let bg = contentView else { return }
-        let hosting = NSHostingView(rootView: view)
+        let hosting = RedrawingHostingView(rootView: view)
         hosting.wantsLayer = true
         hosting.layer?.backgroundColor = NSColor.clear.cgColor
+        hosting.layerContentsRedrawPolicy = .duringViewResize
         hosting.autoresizingMask = [.width, .height]
         hosting.frame = bg.bounds
         bg.subviews.forEach { $0.removeFromSuperview() }
