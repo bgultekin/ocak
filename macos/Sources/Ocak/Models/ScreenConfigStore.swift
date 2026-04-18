@@ -13,6 +13,8 @@ final class ScreenConfigStore {
 
     /// Persisted set of selected screen localizedName values.
     private(set) var selectedScreenNames: Set<String>
+    /// In-memory cache of per-screen edge config, keyed by screen localizedName.
+    private var panelEdgeCache: [String: PanelEdge]
 
     var onChange: (() -> Void)?
 
@@ -23,6 +25,8 @@ final class ScreenConfigStore {
             // Default: all screens selected
             selectedScreenNames = Set(NSScreen.screens.map { $0.localizedName })
         }
+        let stored = UserDefaults.standard.dictionary(forKey: Self.edgeStorageKey) as? [String: String] ?? [:]
+        panelEdgeCache = stored.compactMapValues { PanelEdge(rawValue: $0) }
     }
 
     /// Returns the screens that are both available and selected.
@@ -70,18 +74,13 @@ final class ScreenConfigStore {
 
     /// Returns the configured panel edge for a screen (defaults to .right).
     func panelEdge(for screen: NSScreen) -> PanelEdge {
-        let key = screen.localizedName
-        guard let all = UserDefaults.standard.dictionary(forKey: Self.edgeStorageKey) as? [String: String],
-              let raw = all[key],
-              let edge = PanelEdge(rawValue: raw) else {
-            return .right
-        }
-        return edge
+        panelEdgeCache[screen.localizedName] ?? .right
     }
 
     /// Persist a new panel edge for a screen and trigger ribbon rebuild.
     func setPanelEdge(_ edge: PanelEdge, for screen: NSScreen) {
         let key = screen.localizedName
+        panelEdgeCache[key] = edge
         var all = UserDefaults.standard.dictionary(forKey: Self.edgeStorageKey) as? [String: String] ?? [:]
         all[key] = edge.rawValue
         UserDefaults.standard.set(all, forKey: Self.edgeStorageKey)

@@ -56,18 +56,18 @@ struct DrawerView: View {
 
     @ViewBuilder
     private func terminalPaneGroup() -> some View {
+        let terminalResizeHandle = ResizeHandle(
+            onDragStart: { terminalDragStart = panelSizeStore.terminalWidth },
+            onDrag: { [panelSizeStore] translation in
+                let newWidth = terminalDragStart + dragSign * translation
+                panelSizeStore.updateTerminalWidth(newWidth, for: currentScreen)
+                onWidthChange?(panelSizeStore.expandedWidth)
+            },
+            onEnd: {}
+        )
+
         HStack(spacing: 0) {
-            if edge == .right {
-                ResizeHandle(
-                    onDragStart: { terminalDragStart = panelSizeStore.terminalWidth },
-                    onDrag: { [panelSizeStore] translation in
-                        let newWidth = terminalDragStart + dragSign * translation
-                        panelSizeStore.updateTerminalWidth(newWidth, for: currentScreen)
-                        onWidthChange?(panelSizeStore.expandedWidth)
-                    },
-                    onEnd: {}
-                )
-            }
+            if edge == .right { terminalResizeHandle }
 
             VStack(spacing: 0) {
                 TerminalPaneView(
@@ -105,17 +105,7 @@ struct DrawerView: View {
                 .frame(width: panelSizeStore.terminalWidth, height: 6)
             }
 
-            if edge == .left {
-                ResizeHandle(
-                    onDragStart: { terminalDragStart = panelSizeStore.terminalWidth },
-                    onDrag: { [panelSizeStore] translation in
-                        let newWidth = terminalDragStart + dragSign * translation
-                        panelSizeStore.updateTerminalWidth(newWidth, for: currentScreen)
-                        onWidthChange?(panelSizeStore.expandedWidth)
-                    },
-                    onEnd: {}
-                )
-            }
+            if edge == .left { terminalResizeHandle }
         }
         .frame(height: panelSizeStore.terminalPaneHeight)
         .transition(.fadeFromBelow)
@@ -123,21 +113,20 @@ struct DrawerView: View {
 
     @ViewBuilder
     private func sessionListGroup() -> some View {
-        if edge == .right {
-            ResizeHandle(
-                onDragStart: { sessionListDragStart = panelSizeStore.sessionListWidth },
-                onDrag: { [panelSizeStore] translation in
-                    let newWidth = sessionListDragStart + dragSign * translation
-                    panelSizeStore.updateSessionListWidth(newWidth, for: currentScreen)
-                    let total: CGFloat = store.activeSessionID != nil
-                        ? panelSizeStore.expandedWidth
-                        : panelSizeStore.collapsedWidth
-                    onWidthChange?(total)
-                },
-                onEnd: {}
-            )
-            .padding(.trailing, 6)
-        }
+        let sessionResizeHandle = ResizeHandle(
+            onDragStart: { sessionListDragStart = panelSizeStore.sessionListWidth },
+            onDrag: { [panelSizeStore] translation in
+                let newWidth = sessionListDragStart + dragSign * translation
+                panelSizeStore.updateSessionListWidth(newWidth, for: currentScreen)
+                let total: CGFloat = store.activeSessionID != nil
+                    ? panelSizeStore.expandedWidth
+                    : panelSizeStore.collapsedWidth
+                onWidthChange?(total)
+            },
+            onEnd: {}
+        )
+
+        if edge == .right { sessionResizeHandle.padding(.trailing, 6) }
 
         SessionListView(
             store: store,
@@ -153,21 +142,7 @@ struct DrawerView: View {
             onNewGroup: onNewGroup
         )
 
-        if edge == .left {
-            ResizeHandle(
-                onDragStart: { sessionListDragStart = panelSizeStore.sessionListWidth },
-                onDrag: { [panelSizeStore] translation in
-                    let newWidth = sessionListDragStart + dragSign * translation
-                    panelSizeStore.updateSessionListWidth(newWidth, for: currentScreen)
-                    let total: CGFloat = store.activeSessionID != nil
-                        ? panelSizeStore.expandedWidth
-                        : panelSizeStore.collapsedWidth
-                    onWidthChange?(total)
-                },
-                onEnd: {}
-            )
-            .padding(.leading, 6)
-        }
+        if edge == .left { sessionResizeHandle.padding(.leading, 6) }
     }
 
     @ViewBuilder

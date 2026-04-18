@@ -114,7 +114,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func setupRibbon() {
         screenConfig.onChange = { [weak self] in
-            DispatchQueue.main.async { self?.rebuildRibbons() }
+            DispatchQueue.main.async {
+                self?.rebuildRibbons()
+                self?.reloadDrawerIfVisible()
+            }
         }
         RibbonConfigStore.shared.onChange = { [weak self] in
             DispatchQueue.main.async { self?.rebuildRibbons() }
@@ -318,6 +321,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         drawerPanel?.slideOut { [weak self] in
             self?.drawerPanel = nil
             self?.store.clearSessionStatuses()
+        }
+    }
+
+    private func reloadDrawerIfVisible() {
+        guard let panel = drawerPanel, panel.isVisible else { return }
+        let currentWidth = panel.frame.width
+        panel.slideOut { [weak self] in
+            self?.drawerPanel = nil
+            self?.showDrawer()
+            if let screen = self?.screenForDrawer, let panel = self?.drawerPanel {
+                panel.setWidth(currentWidth, on: screen)
+            }
         }
     }
 
