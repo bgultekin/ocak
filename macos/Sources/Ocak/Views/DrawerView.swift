@@ -23,6 +23,7 @@ struct DrawerView: View {
     @Bindable var store: SessionStore
     let panelSizeStore: PanelSizeStore
     let currentScreen: NSScreen
+    let edge: PanelEdge
     let onWidthChange: ((CGFloat) -> Void)?
     var onNewSession: (UUID) -> Void
     var onNewGroup: () -> Void
@@ -49,76 +50,94 @@ struct DrawerView: View {
             }
     }
 
+    // Drag sign: right-edge handles are left of their pane (drag left = expand, sign = -1).
+    // Left-edge handles are right of their pane (drag right = expand, sign = +1).
+    private var dragSign: CGFloat { edge == .left ? 1 : -1 }
+
     @ViewBuilder
-    private func mainContent() -> some View {
-        if store.activeSessionID != nil {
-            HStack(spacing: 0) {
+    private func terminalPaneGroup() -> some View {
+        HStack(spacing: 0) {
+            if edge == .right {
                 ResizeHandle(
                     onDragStart: { terminalDragStart = panelSizeStore.terminalWidth },
                     onDrag: { [panelSizeStore] translation in
-                        let newWidth = terminalDragStart - translation
+                        let newWidth = terminalDragStart + dragSign * translation
                         panelSizeStore.updateTerminalWidth(newWidth, for: currentScreen)
                         onWidthChange?(panelSizeStore.expandedWidth)
                     },
                     onEnd: {}
                 )
-
-                VStack(spacing: 0) {
-                    TerminalPaneView(
-                        session: store.activeSession,
-                        groupName: store.activeSession.flatMap { session in
-                            store.groups.first { $0.id == session.groupID }?.name
-                        },
-                        initialCommand: store.activeSession.flatMap { session in
-                            store.groups.first { $0.id == session.groupID }?.initialCommand
-                        },
-                        onStatusChange: { id, status in
-                            store.updateStatus(id, status: status)
-                        },
-                        onDirectoryChange: { id, dir in
-                            store.updateDirectory(id, directory: dir)
-                        },
-                        onClose: {
-                            onCloseTerminal?()
-                        }
-                    )
-                    .frame(width: panelSizeStore.terminalWidth)
-                    .frame(maxHeight: .infinity)
-
-                    ResizeHandle(
-                        axis: .vertical,
-                        size: 6,
-                        onDragStart: { terminalHeightDragStart = panelSizeStore.terminalPaneHeight },
-                        onDrag: { [panelSizeStore] deltaY in
-                            // In macOS coords: dragging down = negative deltaY = taller
-                            let newHeight = terminalHeightDragStart - deltaY
-                            panelSizeStore.updateTerminalPaneHeight(newHeight, for: currentScreen)
-                        },
-                        onEnd: {}
-                    )
-                    .frame(width: panelSizeStore.terminalWidth, height: 6)
-                }
             }
-            .frame(height: panelSizeStore.terminalPaneHeight)
-            .transition(.fadeFromBelow)
+
+            VStack(spacing: 0) {
+                TerminalPaneView(
+                    session: store.activeSession,
+                    groupName: store.activeSession.flatMap { session in
+                        store.groups.first { $0.id == session.groupID }?.name
+                    },
+                    initialCommand: store.activeSession.flatMap { session in
+                        store.groups.first { $0.id == session.groupID }?.initialCommand
+                    },
+                    onStatusChange: { id, status in
+                        store.updateStatus(id, status: status)
+                    },
+                    onDirectoryChange: { id, dir in
+                        store.updateDirectory(id, directory: dir)
+                    },
+                    onClose: {
+                        onCloseTerminal?()
+                    }
+                )
+                .frame(width: panelSizeStore.terminalWidth)
+                .frame(maxHeight: .infinity)
+
+                ResizeHandle(
+                    axis: .vertical,
+                    size: 6,
+                    onDragStart: { terminalHeightDragStart = panelSizeStore.terminalPaneHeight },
+                    onDrag: { [panelSizeStore] deltaY in
+                        // In macOS coords: dragging down = negative deltaY = taller
+                        let newHeight = terminalHeightDragStart - deltaY
+                        panelSizeStore.updateTerminalPaneHeight(newHeight, for: currentScreen)
+                    },
+                    onEnd: {}
+                )
+                .frame(width: panelSizeStore.terminalWidth, height: 6)
+            }
+
+            if edge == .left {
+                ResizeHandle(
+                    onDragStart: { terminalDragStart = panelSizeStore.terminalWidth },
+                    onDrag: { [panelSizeStore] translation in
+                        let newWidth = terminalDragStart + dragSign * translation
+                        panelSizeStore.updateTerminalWidth(newWidth, for: currentScreen)
+                        onWidthChange?(panelSizeStore.expandedWidth)
+                    },
+                    onEnd: {}
+                )
+            }
         }
+        .frame(height: panelSizeStore.terminalPaneHeight)
+        .transition(.fadeFromBelow)
+    }
 
-        Spacer(minLength: 0)
-
-        // Resize handle at left edge of session list
-        ResizeHandle(
-            onDragStart: { sessionListDragStart = panelSizeStore.sessionListWidth },
-            onDrag: { [panelSizeStore] translation in
-                let newWidth = sessionListDragStart - translation
-                panelSizeStore.updateSessionListWidth(newWidth, for: currentScreen)
-                let total: CGFloat = store.activeSessionID != nil
-                    ? panelSizeStore.expandedWidth
-                    : panelSizeStore.collapsedWidth
-                onWidthChange?(total)
-            },
-            onEnd: {}
-        )
-        .padding(.trailing, 6)
+    @ViewBuilder
+    private func sessionListGroup() -> some View {
+        if edge == .right {
+            ResizeHandle(
+                onDragStart: { sessionListDragStart = panelSizeStore.sessionListWidth },
+                onDrag: { [panelSizeStore] translation in
+                    let newWidth = sessionListDragStart + dragSign * translation
+                    panelSizeStore.updateSessionListWidth(newWidth, for: currentScreen)
+                    let total: CGFloat = store.activeSessionID != nil
+                        ? panelSizeStore.expandedWidth
+                        : panelSizeStore.collapsedWidth
+                    onWidthChange?(total)
+                },
+                onEnd: {}
+            )
+            .padding(.trailing, 6)
+        }
 
         SessionListView(
             store: store,
@@ -133,5 +152,38 @@ struct DrawerView: View {
             },
             onNewGroup: onNewGroup
         )
+
+        if edge == .left {
+            ResizeHandle(
+                onDragStart: { sessionListDragStart = panelSizeStore.sessionListWidth },
+                onDrag: { [panelSizeStore] translation in
+                    let newWidth = sessionListDragStart + dragSign * translation
+                    panelSizeStore.updateSessionListWidth(newWidth, for: currentScreen)
+                    let total: CGFloat = store.activeSessionID != nil
+                        ? panelSizeStore.expandedWidth
+                        : panelSizeStore.collapsedWidth
+                    onWidthChange?(total)
+                },
+                onEnd: {}
+            )
+            .padding(.leading, 6)
+        }
+    }
+
+    @ViewBuilder
+    private func mainContent() -> some View {
+        if edge == .right {
+            if store.activeSessionID != nil {
+                terminalPaneGroup()
+            }
+            Spacer(minLength: 0)
+            sessionListGroup()
+        } else {
+            sessionListGroup()
+            Spacer(minLength: 0)
+            if store.activeSessionID != nil {
+                terminalPaneGroup()
+            }
+        }
     }
 }

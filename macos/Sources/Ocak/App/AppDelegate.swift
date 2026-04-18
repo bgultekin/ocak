@@ -152,10 +152,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 continue
             }
 
-            let origin = NSPoint(
-                x: visibleFrame.maxX - ribbonWidth,
-                y: visibleFrame.midY - ribbonHeight / 2
-            )
+            let panelEdge = screenConfig.panelEdge(for: screen)
+            let ribbonOriginX: CGFloat = panelEdge == .right
+                ? visibleFrame.maxX - ribbonWidth
+                : visibleFrame.minX
+            let origin = NSPoint(x: ribbonOriginX, y: visibleFrame.midY - ribbonHeight / 2)
             panel.setFrameOrigin(origin)
             panel.orderFrontRegardless()
             ribbonPanels.append(panel)
@@ -184,9 +185,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let style = RibbonConfigStore.shared.ribbonStyle
         let hoverWidth: CGFloat = style == .smoke ? max(ribbonHeight * Self.smokeRibbonWidthFactor, 25) : 25
-        let edgeThreshold = visibleFrame.maxX - hoverWidth
-
-        let inHorizontalZone = mouseLocation.x > edgeThreshold
+        let panelEdge = screenConfig.panelEdge(for: screen)
+        let inHorizontalZone: Bool
+        switch panelEdge {
+        case .right: inHorizontalZone = mouseLocation.x > visibleFrame.maxX - hoverWidth
+        case .left:  inHorizontalZone = mouseLocation.x < visibleFrame.minX + hoverWidth
+        }
         let inVerticalZone = mouseLocation.y >= ribbonTop && mouseLocation.y <= ribbonBottom
         let inZone = inHorizontalZone && inVerticalZone
 
@@ -264,11 +268,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         let panel = DrawerPanel()
         let width = store.activeSessionID != nil ? panelSizeStore.expandedWidth : panelSizeStore.collapsedWidth
+        let panelEdge = screenConfig.panelEdge(for: screen)
 
         let drawerView = DrawerView(
             store: store,
             panelSizeStore: panelSizeStore,
             currentScreen: screen,
+            edge: panelEdge,
             onWidthChange: { [weak self] newWidth in
                 guard let self, let screen = self.screenForDrawer, let panel = self.drawerPanel else { return }
                 panel.setWidth(newWidth, on: screen)
@@ -304,9 +310,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         drawerPanel = panel
         store.isPanelVisible = true
-        panel.slideIn(on: screen, width: width)
-
-
+        panel.slideIn(on: screen, width: width, edge: panelEdge)
     }
 
     private func dismissDrawer() {

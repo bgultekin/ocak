@@ -9,6 +9,7 @@ final class ScreenConfigStore {
     static let shared = ScreenConfigStore()
 
     private static let storageKey = "ocak.selectedScreenIDs"
+    private static let edgeStorageKey = "ocak.panelEdges"
 
     /// Persisted set of selected screen localizedName values.
     private(set) var selectedScreenNames: Set<String>
@@ -65,6 +66,26 @@ final class ScreenConfigStore {
             persist()
             onChange?()
         }
+    }
+
+    /// Returns the configured panel edge for a screen (defaults to .right).
+    func panelEdge(for screen: NSScreen) -> PanelEdge {
+        let key = screen.localizedName
+        guard let all = UserDefaults.standard.dictionary(forKey: Self.edgeStorageKey) as? [String: String],
+              let raw = all[key],
+              let edge = PanelEdge(rawValue: raw) else {
+            return .right
+        }
+        return edge
+    }
+
+    /// Persist a new panel edge for a screen and trigger ribbon rebuild.
+    func setPanelEdge(_ edge: PanelEdge, for screen: NSScreen) {
+        let key = screen.localizedName
+        var all = UserDefaults.standard.dictionary(forKey: Self.edgeStorageKey) as? [String: String] ?? [:]
+        all[key] = edge.rawValue
+        UserDefaults.standard.set(all, forKey: Self.edgeStorageKey)
+        onChange?()
     }
 
     private func persist() {
