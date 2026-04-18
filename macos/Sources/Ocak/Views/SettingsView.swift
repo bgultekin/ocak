@@ -105,6 +105,17 @@ struct SettingsView: View {
                             screenLabel(screen)
                         }
                         .disabled(isLastSelected)
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { model.screenConfig.panelEdge(for: screen) },
+                            set: { model.screenConfig.setPanelEdge($0, for: screen) }
+                        )) {
+                            Text("Left").tag(PanelEdge.left)
+                            Text("Right").tag(PanelEdge.right)
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 100)
+                        .disabled(!isChecked)
                     }
                 }
             }

@@ -7,6 +7,7 @@ final class DrawerPanel: NSPanel {
     private var clickOutsideMonitor: Any?
     private var localClickMonitor: Any?
     var onDismiss: (() -> Void)?
+    private var edge: PanelEdge = .right
 
     init() {
         super.init(
@@ -57,28 +58,35 @@ final class DrawerPanel: NSPanel {
 
     // MARK: - Slide Animations
 
-    func slideIn(on screen: NSScreen, width: CGFloat) {
+    func slideIn(on screen: NSScreen, width: CGFloat, edge: PanelEdge) {
+        self.edge = edge
         let visibleFrame = screen.visibleFrame
         let panelHeight = visibleFrame.height
 
-        let targetOrigin = NSPoint(
-            x: visibleFrame.maxX - width - ribbonWidth,
-            y: visibleFrame.minY
-        )
+        let targetOriginX: CGFloat
+        let slideOffset: CGFloat
+        switch edge {
+        case .right:
+            targetOriginX = visibleFrame.maxX - width - ribbonWidth
+            slideOffset = width
+        case .left:
+            targetOriginX = visibleFrame.minX + ribbonWidth
+            slideOffset = -width
+        }
 
+        let targetOrigin = NSPoint(x: targetOriginX, y: visibleFrame.minY)
         setFrame(NSRect(origin: targetOrigin, size: NSSize(width: width, height: panelHeight)), display: false)
 
         guard let bg = contentView else { return }
         bg.wantsLayer = true
         bg.layer?.masksToBounds = false
 
-        // Start translated to the right — content appears to come from off-screen
-        bg.layer?.transform = CATransform3DMakeTranslation(width, 0, 0)
+        bg.layer?.transform = CATransform3DMakeTranslation(slideOffset, 0, 0)
 
         orderFrontRegardless()
 
         let slide = CABasicAnimation(keyPath: "transform")
-        slide.fromValue = CATransform3DMakeTranslation(width, 0, 0)
+        slide.fromValue = CATransform3DMakeTranslation(slideOffset, 0, 0)
         slide.toValue = CATransform3DIdentity
         slide.duration = 0.3
         slide.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -108,9 +116,10 @@ final class DrawerPanel: NSPanel {
 
         let currentWidth = frame.width
 
+        let slideOffset: CGFloat = edge == .right ? currentWidth : -currentWidth
         let slide = CABasicAnimation(keyPath: "transform")
         slide.fromValue = CATransform3DIdentity
-        slide.toValue = CATransform3DMakeTranslation(currentWidth, 0, 0)
+        slide.toValue = CATransform3DMakeTranslation(slideOffset, 0, 0)
         slide.duration = 0.5
         slide.timingFunction = CAMediaTimingFunction(controlPoints: 0.55, 0.085, 0.68, 0.53)
         slide.fillMode = .forwards
@@ -130,26 +139,24 @@ final class DrawerPanel: NSPanel {
     /// Resize immediately without animation (for live drag resizing).
     func setWidth(_ newWidth: CGFloat, on screen: NSScreen) {
         let visibleFrame = screen.visibleFrame
-        let newOriginX = visibleFrame.maxX - newWidth - ribbonWidth
-        let newFrame = NSRect(
-            x: newOriginX,
-            y: frame.origin.y,
-            width: newWidth,
-            height: frame.height
-        )
+        let newOriginX: CGFloat
+        switch edge {
+        case .right: newOriginX = visibleFrame.maxX - newWidth - ribbonWidth
+        case .left:  newOriginX = visibleFrame.minX + ribbonWidth
+        }
+        let newFrame = NSRect(x: newOriginX, y: frame.origin.y, width: newWidth, height: frame.height)
         setFrame(newFrame, display: true)
     }
 
-    /// Expand or contract the panel width while keeping the right edge pinned.
+    /// Expand or contract the panel width while keeping the configured edge pinned.
     func animateToWidth(_ newWidth: CGFloat, on screen: NSScreen) {
         let visibleFrame = screen.visibleFrame
-        let newOriginX = visibleFrame.maxX - newWidth - ribbonWidth
-        let newFrame = NSRect(
-            x: newOriginX,
-            y: frame.origin.y,
-            width: newWidth,
-            height: frame.height
-        )
+        let newOriginX: CGFloat
+        switch edge {
+        case .right: newOriginX = visibleFrame.maxX - newWidth - ribbonWidth
+        case .left:  newOriginX = visibleFrame.minX + ribbonWidth
+        }
+        let newFrame = NSRect(x: newOriginX, y: frame.origin.y, width: newWidth, height: frame.height)
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.25
             ctx.timingFunction = CAMediaTimingFunction(name: .easeOut)
