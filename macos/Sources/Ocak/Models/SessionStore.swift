@@ -93,6 +93,14 @@ final class SessionStore {
         }
     }
 
+    func setGroupCollapsed(_ id: UUID, collapsed: Bool) {
+        if let idx = groups.firstIndex(where: { $0.id == id }) {
+            guard groups[idx].isCollapsed != collapsed else { return }
+            groups[idx].isCollapsed = collapsed
+            save()
+        }
+    }
+
     func removeGroup(_ id: UUID) {
         sessions.filter { $0.groupID == id }.map(\.id).forEach { removeSession($0) }
         groups.removeAll { $0.id == id }

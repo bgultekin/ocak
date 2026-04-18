@@ -78,6 +78,9 @@ struct SessionListView: View {
                                         store.moveSession(session.id, toGroup: item.group.id, at: targetCount)
                                         dropTargetGroupID = nil
                                         draggedSession = nil
+                                    },
+                                    onExpandGroup: {
+                                        store.setGroupCollapsed(item.group.id, collapsed: false)
                                     }
                                 )
                             )
@@ -184,6 +187,9 @@ struct GroupListItem: View {
                 dropTargetGroupID: $dropTargetGroupID,
                 onSessionDrop: { session in
                     onSessionDroppedOnGroup(session, session.groupID)
+                },
+                onExpandGroup: {
+                    store.setGroupCollapsed(group.id, collapsed: false)
                 }
             )
         )
@@ -196,6 +202,7 @@ struct GroupDropTargetDelegate: DropDelegate {
     @Binding var draggedSession: ThreadSession?
     @Binding var dropTargetGroupID: UUID?
     let onSessionDrop: (ThreadSession) -> Void
+    var onExpandGroup: (() -> Void)?
 
     func performDrop(info: DropInfo) -> Bool {
         if let session = draggedSession {
@@ -208,6 +215,7 @@ struct GroupDropTargetDelegate: DropDelegate {
 
     func dropEntered(info: DropInfo) {
         dropTargetGroupID = groupID
+        onExpandGroup?()
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
@@ -257,18 +265,36 @@ struct SessionGroupListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             headerRow
-            dividerLine
-            contentArea
+            if !group.isCollapsed || isEditingSettings {
+                dividerLine
+                contentArea
+            }
         }
         .padding(12)
         .background(groupBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .animation(.easeInOut(duration: 0.2), value: isEditingSettings)
+        .animation(.easeInOut(duration: 0.2), value: group.isCollapsed)
         .animation(.easeInOut(duration: 0.15), value: isDropTarget)
     }
 
     private var headerRow: some View {
         HStack(spacing: 6) {
+            if !isRenamingGroup {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        store.setGroupCollapsed(group.id, collapsed: !group.isCollapsed)
+                    }
+                } label: {
+                    Image(systemName: group.isCollapsed ? "chevron.right" : "chevron.down")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(OcakTheme.sectionLabel)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
             if isRenamingGroup {
                 GroupNameTextField(
                     text: $draftGroupName,
@@ -284,11 +310,18 @@ struct SessionGroupListView: View {
                     .tracking(1.2)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startGroupRename() }
+                if group.isCollapsed, let dotColor = groupStatusDotColor {
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: 6, height: 6)
+                }
             }
 
             Spacer()
 
-            if !isEditingSettings {
+            if group.isCollapsed && !isEditingSettings {
+                collapsedTrailing
+            } else if !isEditingSettings {
                 settingsButton
                 newSessionButton
             }
@@ -354,6 +387,7 @@ struct SessionGroupListView: View {
             editDirectory = group.directory ?? ""
             editInitialCommand = group.initialCommand ?? ""
             withAnimation(.easeInOut(duration: 0.2)) {
+                store.setGroupCollapsed(group.id, collapsed: false)
                 isEditingSettings = true
             }
         } label: {
@@ -389,6 +423,26 @@ struct SessionGroupListView: View {
                 isNewSessionHovered = hovering
             }
         }
+    }
+
+    private var collapsedTrailing: some View {
+        let count = sessions.count
+        return Text("\(count) session\(count == 1 ? "" : "s")")
+            .font(.system(size: 11))
+            .foregroundColor(OcakTheme.sectionLabel.opacity(0.7))
+    }
+
+    private var groupStatusDotColor: Color? {
+        if sessions.contains(where: { $0.status == .needs_input }) {
+            return OcakTheme.statusColor(for: .needs_input)
+        }
+        if sessions.contains(where: { $0.status == .working }) {
+            return OcakTheme.statusColor(for: .working)
+        }
+        if sessions.contains(where: { $0.status == .done }) {
+            return OcakTheme.statusColor(for: .done)
+        }
+        return nil
     }
 
     private var dividerLine: some View {
