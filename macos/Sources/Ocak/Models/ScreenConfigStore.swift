@@ -22,8 +22,7 @@ final class ScreenConfigStore {
         if let names = UserDefaults.standard.array(forKey: Self.storageKey) as? [String], !names.isEmpty {
             selectedScreenNames = Set(names)
         } else {
-            // Default: all screens selected
-            selectedScreenNames = Set(NSScreen.screens.map { $0.localizedName })
+            selectedScreenNames = Set(NSScreen.screens.map { $0.stableKey })
         }
         let stored = UserDefaults.standard.dictionary(forKey: Self.edgeStorageKey) as? [String: String] ?? [:]
         panelEdgeCache = stored.compactMapValues { PanelEdge(rawValue: $0) }
@@ -32,7 +31,7 @@ final class ScreenConfigStore {
     /// Returns the screens that are both available and selected.
     var activeScreens: [NSScreen] {
         let available = NSScreen.screens
-        let filtered = available.filter { selectedScreenNames.contains($0.localizedName) }
+        let filtered = available.filter { selectedScreenNames.contains($0.stableKey) }
         return filtered.isEmpty ? available : filtered
     }
 
@@ -43,27 +42,27 @@ final class ScreenConfigStore {
 
     /// Whether a specific screen is in the active set.
     func isScreenActive(_ screen: NSScreen) -> Bool {
-        selectedScreenNames.contains(screen.localizedName)
+        selectedScreenNames.contains(screen.stableKey)
     }
 
     /// Toggle screen selection on/off.
     /// Prevents deselecting the last remaining screen.
     func toggleScreen(_ screen: NSScreen) {
-        let name = screen.localizedName
-        if selectedScreenNames.contains(name) {
+        let key = screen.stableKey
+        if selectedScreenNames.contains(key) {
             guard selectedScreenNames.count > 1 else { return }
-            selectedScreenNames.remove(name)
+            selectedScreenNames.remove(key)
         } else {
-            selectedScreenNames.insert(name)
+            selectedScreenNames.insert(key)
         }
         persist()
         onChange?()
     }
 
     /// Sync stored selection with currently available screens.
-    /// Removes names of screens that no longer exist.
+    /// Removes keys of screens that no longer exist.
     func pruneDisconnectedScreens() {
-        let available = Set(NSScreen.screens.map { $0.localizedName })
+        let available = Set(NSScreen.screens.map { $0.stableKey })
         let before = selectedScreenNames
         selectedScreenNames = selectedScreenNames.intersection(available)
         if selectedScreenNames != before {
@@ -74,12 +73,12 @@ final class ScreenConfigStore {
 
     /// Returns the configured panel edge for a screen (defaults to .right).
     func panelEdge(for screen: NSScreen) -> PanelEdge {
-        panelEdgeCache[screen.localizedName] ?? .right
+        panelEdgeCache[screen.stableKey] ?? .right
     }
 
     /// Persist a new panel edge for a screen and trigger ribbon rebuild.
     func setPanelEdge(_ edge: PanelEdge, for screen: NSScreen) {
-        let key = screen.localizedName
+        let key = screen.stableKey
         panelEdgeCache[key] = edge
         var all = UserDefaults.standard.dictionary(forKey: Self.edgeStorageKey) as? [String: String] ?? [:]
         all[key] = edge.rawValue
