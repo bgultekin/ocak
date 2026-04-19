@@ -58,8 +58,10 @@ struct RibbonView: View {
         case .processing:
             startBreathing()
         case .attention:
+            breatheOpacity = 0.15
             nudgeAnimation()
         case .success:
+            breatheOpacity = 0.15
             flashAnimation()
         case .done, .idle:
             breatheOpacity = 0.15

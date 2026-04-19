@@ -8,7 +8,7 @@ struct ScreenPickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(availableScreens, id: \.localizedName) { screen in
+            ForEach(availableScreens, id: \.stableKey) { screen in
                 let isChecked = screenConfig.isScreenActive(screen)
                 let isLastSelected = isChecked && screenConfig.selectedScreenNames.count == 1
                 Toggle(isOn: Binding(

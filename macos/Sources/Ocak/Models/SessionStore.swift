@@ -34,11 +34,7 @@ final class SessionStore {
     var hasWorking: Bool { sessions.contains { $0.status == .working } }
     var hasDone: Bool { sessions.contains { $0.status == .done } }
     var lastCompletionTime: Date?
-
-    var showSuccessFlash: Bool {
-        guard let t = lastCompletionTime else { return false }
-        return Date().timeIntervalSince(t) < 2.0
-    }
+    var showSuccessFlash: Bool = false
 
     var activeSession: ThreadSession? {
         get { sessions.first { $0.id == activeSessionID } }
@@ -234,6 +230,13 @@ final class SessionStore {
         }
     }
 
+    private func triggerSuccessFlash() {
+        showSuccessFlash = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            self?.showSuccessFlash = false
+        }
+    }
+
     func clearSessionStatuses() {
         for idx in sessions.indices {
             let s = sessions[idx].status
@@ -249,6 +252,7 @@ final class SessionStore {
             sessions[idx].status = status
             if previous == .working && status == .done {
                 lastCompletionTime = Date()
+                triggerSuccessFlash()
             }
         }
     }
@@ -319,6 +323,7 @@ final class SessionStore {
         sessions[idx].status = newStatus
         if previous == .working && newStatus == .done {
             lastCompletionTime = Date()
+            triggerSuccessFlash()
         }
     }
 

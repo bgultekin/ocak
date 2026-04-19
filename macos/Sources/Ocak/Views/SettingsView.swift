@@ -118,7 +118,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Displays")
                     .font(.headline)
-                ForEach(model.availableScreens, id: \.localizedName) { screen in
+                ForEach(model.availableScreens, id: \.stableKey) { screen in
                     let isChecked = model.screenConfig.isScreenActive(screen)
                     let isLastSelected = isChecked && model.screenConfig.selectedScreenNames.count == 1
                     HStack(spacing: 8) {

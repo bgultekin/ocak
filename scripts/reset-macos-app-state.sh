@@ -11,20 +11,23 @@ APP_SUPPORT="$HOME/Library/Application Support/Ocak"
 REMOVE_APP_SUPPORT=true
 REMOVE_PLUGINS=true
 # both | installed | swift-run
-DEFAULTS_SCOPE=both
+DEFAULTS_SCOPE=swift-run
 
 usage() {
     cat <<'EOF'
 Reset Ocak preferences, Application Support, and agent plugins (Claude Code + OpenCode).
 
-By default clears UserDefaults for BOTH the installed app (com.ocak.app) and swift run (Ocak).
+By default clears UserDefaults for the dev (swift run) domain only.
 
 Usage:
-  ./scripts/reset-macos-app-state.sh
-  ./scripts/reset-macos-app-state.sh --installed-app-only
-  ./scripts/reset-macos-app-state.sh --swift-run-only
+  ./scripts/reset-macos-app-state.sh              # dev only (default)
+  ./scripts/reset-macos-app-state.sh --dev        # dev only (explicit)
+  ./scripts/reset-macos-app-state.sh --app        # installed .app only
+  ./scripts/reset-macos-app-state.sh --both       # dev + installed .app
   ./scripts/reset-macos-app-state.sh --defaults-only    # keep ~/Library/Application Support/Ocak
   ./scripts/reset-macos-app-state.sh --no-plugins       # keep Claude/OpenCode plugin installs
+
+Aliases: --app = --installed-app-only, --dev = --swift-run-only
 
 Environment:
   OCAK_INSTALLED_APP_DOMAIN   UserDefaults domain for the .app install (default: com.ocak.app).
@@ -32,7 +35,7 @@ Environment:
   OCAK_DEFAULTS_DOMAIN        Alias for OCAK_INSTALLED_APP_DOMAIN (backward compatible).
 
 Examples:
-  OCAK_INSTALLED_APP_DOMAIN=com.example.foo ./scripts/reset-macos-app-state.sh
+  OCAK_INSTALLED_APP_DOMAIN=com.example.foo ./scripts/reset-macos-app-state.sh --app
 EOF
 }
 
@@ -161,20 +164,16 @@ remove_ocak_plugins() {
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --installed-app-only)
-            if [[ "$DEFAULTS_SCOPE" == "swift-run" ]]; then
-                echo "Error: --installed-app-only conflicts with --swift-run-only." >&2
-                exit 1
-            fi
+        --app | --installed-app-only)
             DEFAULTS_SCOPE=installed
             shift
             ;;
-        --swift-run-only)
-            if [[ "$DEFAULTS_SCOPE" == "installed" ]]; then
-                echo "Error: --swift-run-only conflicts with --installed-app-only." >&2
-                exit 1
-            fi
+        --dev | --swift-run-only)
             DEFAULTS_SCOPE=swift-run
+            shift
+            ;;
+        --both | --all)
+            DEFAULTS_SCOPE=both
             shift
             ;;
         --defaults-only)
@@ -199,13 +198,13 @@ done
 
 case "$DEFAULTS_SCOPE" in
     both)
-        echo "Ocak state reset (UserDefaults: $INSTALLED_APP_DOMAIN + $SWIFT_RUN_DOMAIN)"
+        echo "Ocak state reset (UserDefaults: dev=$SWIFT_RUN_DOMAIN + app=$INSTALLED_APP_DOMAIN)"
         ;;
     installed)
-        echo "Ocak state reset (UserDefaults: $INSTALLED_APP_DOMAIN only)"
+        echo "Ocak state reset (UserDefaults: app=$INSTALLED_APP_DOMAIN only)"
         ;;
     swift-run)
-        echo "Ocak state reset (UserDefaults: $SWIFT_RUN_DOMAIN only)"
+        echo "Ocak state reset (UserDefaults: dev=$SWIFT_RUN_DOMAIN only)"
         ;;
 esac
 

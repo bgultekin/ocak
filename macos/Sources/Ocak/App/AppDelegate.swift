@@ -49,6 +49,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             self?.toggleDrawer()
         }
 
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(screensChanged),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
+
         setupAppearanceObserver()
         updateService.checkOnLaunch()
     }
@@ -125,6 +132,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             DispatchQueue.main.async { self?.rebuildRibbons() }
         }
         rebuildRibbons()
+    }
+
+    @objc private func screensChanged() {
+        screenConfig.pruneDisconnectedScreens()
+        rebuildRibbons()
+        reloadDrawerIfVisible()
     }
 
     private func rebuildRibbons() {
