@@ -68,13 +68,7 @@ struct TerminalPaneView: View {
             Spacer()
 
             if let onClose {
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(OcakTheme.sectionLabel)
-                        .frame(width: 14, height: 14)
-                }
-                .buttonStyle(.plain)
+                CloseButton(action: onClose)
             }
         }
         .padding(.horizontal, 16)
@@ -96,5 +90,28 @@ struct TerminalPaneView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OcakTheme.terminalBackground)
+    }
+}
+
+private struct CloseButton: View {
+    let action: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "xmark")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(OcakTheme.sectionLabel)
+                .frame(width: 24, height: 24)
+                .background(isHovered ? OcakTheme.buttonHoverBackground : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
     }
 }

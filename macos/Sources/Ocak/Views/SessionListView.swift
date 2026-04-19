@@ -433,7 +433,7 @@ struct SessionGroupListView: View {
 
     private var collapsedTrailing: some View {
         let count = sessions.count
-        return Text("\(count) session\(count == 1 ? "" : "s")")
+        return Text("\(count) terminal\(count == 1 ? "" : "s")")
             .font(.system(size: 11))
             .foregroundColor(OcakTheme.sectionLabel.opacity(0.7))
     }
