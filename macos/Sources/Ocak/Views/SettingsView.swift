@@ -410,6 +410,7 @@ struct SettingsView: View {
 
                     infoRow("SwiftTerm", value: "Miguel de Icaza")
                     infoRow("KeyboardShortcuts", value: "Sindre Sorhus")
+                    infoRow("Sparkle", value: "Sparkle Project")
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 20)
