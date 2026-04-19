@@ -74,6 +74,10 @@ enum OcakTheme {
         effectiveMode == .dark ? Color(hex: 0x636366) : Color(hex: 0x6C6C70)
     }
 
+    static var sectionLabelHighlighted: Color {
+        effectiveMode == .dark ? Color(hex: 0xAEAEB2) : Color(hex: 0x1C1C1E)
+    }
+
     // MARK: - Button backgrounds
 
     static var buttonBackground: Color {

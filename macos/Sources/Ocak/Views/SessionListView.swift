@@ -10,6 +10,15 @@ extension Image {
         }
         return Image(systemName: "terminal")
     }
+
+    static func ocakTextLogo(colorScheme: ColorScheme) -> Image? {
+        let name = colorScheme == .dark ? "ocak-text-light" : "ocak-text-dark"
+        if let url = Bundle.module.url(forResource: name, withExtension: "png"),
+           let nsImage = NSImage(contentsOf: url) {
+            return Image(nsImage: nsImage)
+        }
+        return nil
+    }
 }
 
 /// The 320px-wide session sidebar with Ocak app header and grouped session cards.
@@ -20,6 +29,7 @@ struct SessionListView: View {
     var onNewSession: (UUID) -> Void
     var onNewGroup: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
     @State private var draggedSession: ThreadSession?
     @State private var dropTargetGroupID: UUID?
     @State private var isHeaderNewGroupHovered = false
@@ -119,9 +129,16 @@ struct SessionListView: View {
             }
             .frame(width: 26, height: 26)
 
-            Text("Ocak")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(OcakTheme.labelPrimary)
+            if let logo = Image.ocakTextLogo(colorScheme: colorScheme) {
+                logo
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 16)
+            } else {
+                Text("Ocak")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(OcakTheme.labelPrimary)
+            }
 
             Spacer()
 
@@ -263,6 +280,7 @@ struct SessionGroupListView: View {
     @State private var isSettingsHovered = false
     @State private var isNewSessionHovered = false
 
+    @State private var isGroupHovered = false
     @State private var isRenamingGroup = false
     @State private var draftGroupName = ""
     @State private var outsideClickMonitor: Any?
@@ -282,6 +300,9 @@ struct SessionGroupListView: View {
         .animation(.easeInOut(duration: 0.2), value: isEditingSettings)
         .animation(.easeInOut(duration: 0.2), value: group.isCollapsed)
         .animation(.easeInOut(duration: 0.15), value: isDropTarget)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) { isGroupHovered = hovering }
+        }
     }
 
     private var headerRow: some View {
@@ -294,7 +315,7 @@ struct SessionGroupListView: View {
                 } label: {
                     Image(systemName: group.isCollapsed ? "chevron.right" : "chevron.down")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(OcakTheme.sectionLabel)
+                        .foregroundColor(groupTitleColor)
                         .frame(width: 24, height: 24)
                         .contentShape(Rectangle())
                 }
@@ -312,7 +333,7 @@ struct SessionGroupListView: View {
             } else {
                 Text(group.name.uppercased())
                     .font(.system(size: 12, weight: .light))
-                    .foregroundColor(OcakTheme.sectionLabel)
+                    .foregroundColor(groupTitleColor)
                     .tracking(1.2)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startGroupRename() }
@@ -399,7 +420,7 @@ struct SessionGroupListView: View {
         } label: {
             Image(systemName: "gear")
                 .font(.system(size: 16))
-                .foregroundColor(OcakTheme.sectionLabel)
+                .foregroundColor(groupTitleColor)
                 .frame(width: 24, height: 24)
                 .background(isSettingsHovered ? OcakTheme.buttonHoverBackground : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -417,7 +438,7 @@ struct SessionGroupListView: View {
         Button(action: onNewSessionInGroup) {
             Image(systemName: "plus")
                 .font(.system(size: 16))
-                .foregroundColor(OcakTheme.sectionLabel)
+                .foregroundColor(groupTitleColor)
                 .frame(width: 24, height: 24)
                 .background(isNewSessionHovered ? OcakTheme.buttonHoverBackground : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -436,6 +457,11 @@ struct SessionGroupListView: View {
         return Text("\(count) terminal\(count == 1 ? "" : "s")")
             .font(.system(size: 11))
             .foregroundColor(OcakTheme.sectionLabel.opacity(0.7))
+    }
+
+    private var groupTitleColor: Color {
+        let highlighted = isGroupHovered || sessions.contains(where: { $0.id == activeSessionID })
+        return highlighted ? OcakTheme.sectionLabelHighlighted : OcakTheme.sectionLabel
     }
 
     private var groupStatusDotColor: Color? {
