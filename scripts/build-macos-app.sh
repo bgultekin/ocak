@@ -42,6 +42,24 @@ for bundle in "$ARM_BUILD_DIR"/*_*.bundle; do
     [ -d "$bundle" ] && cp -R "$bundle" "$APP_BUNDLE/"
 done
 
+# Embed Sparkle.framework from SPM's resolved XCFramework artifacts.
+# The binary links against @rpath/Sparkle.framework; we need it in Contents/Frameworks
+# with a matching rpath entry so dyld resolves it at runtime.
+SPARKLE_FW=$(find "$SPM_DIR/.build/artifacts" -path "*/macos-arm64_x86_64/Sparkle.framework" -type d 2>/dev/null | head -1)
+if [ -z "$SPARKLE_FW" ]; then
+    # Fallback: any Sparkle.framework in the build tree
+    SPARKLE_FW=$(find "$SPM_DIR/.build" -name "Sparkle.framework" -type d 2>/dev/null | head -1)
+fi
+if [ -n "$SPARKLE_FW" ]; then
+    echo "Embedding Sparkle.framework from: $SPARKLE_FW"
+    mkdir -p "$APP_BUNDLE/Contents/Frameworks"
+    cp -R "$SPARKLE_FW" "$APP_BUNDLE/Contents/Frameworks/"
+    install_name_tool -add_rpath @executable_path/../Frameworks "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+else
+    echo "ERROR: Sparkle.framework not found in SPM build artifacts" >&2
+    exit 1
+fi
+
 # Create app icon (AppIcon.icns) from assets
 ASSETS_IMAGES_DIR="$REPO_ROOT/assets/images"
 ICONSET_DIR="$REPO_ROOT/.dist/AppIcon.iconset"
