@@ -39,7 +39,18 @@ jobs:
       - name: Build universal app and DMG
         env:
           APP_VERSION: ${{ steps.version.outputs.version }}
+          SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
+          SPARKLE_FEED_URL: ${{ vars.SPARKLE_FEED_URL }}
         run: ./scripts/build-macos-app.sh
+
+      - name: Sign DMG and generate appcast.xml
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: ./scripts/generate-appcast.sh
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
@@ -59,8 +70,12 @@ jobs:
           if [ -n "$PREV_TAG" ]; then
             NOTES_ARGS+=(--notes-start-tag "$PREV_TAG")
           fi
+          ASSETS=(".dist/Ocak.dmg#Ocak.dmg")
+          if [ -f ".dist/appcast.xml" ]; then
+            ASSETS+=(".dist/appcast.xml#appcast.xml")
+          fi
           gh release create "$TAG" \
             --draft \
             --title "Ocak $VERSION" \
             "${NOTES_ARGS[@]}" \
-            ".dist/Ocak.dmg#Ocak.dmg"
+            "${ASSETS[@]}"

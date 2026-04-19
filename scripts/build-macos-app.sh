@@ -101,6 +101,16 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
     <string>1</string>
     <key>CFBundleShortVersionString</key>
     <string>$APP_VERSION</string>
+    <key>SUFeedURL</key>
+    <string>${SPARKLE_FEED_URL:-https://github.com/bgultekin/ocak/releases/latest/download/appcast.xml}</string>
+    <key>SUPublicEDKey</key>
+    <string>${SPARKLE_PUBLIC_KEY:-}</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUAutomaticallyUpdate</key>
+    <false/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>

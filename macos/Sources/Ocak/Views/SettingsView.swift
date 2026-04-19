@@ -88,6 +88,33 @@ struct SettingsView: View {
 
             Divider()
 
+            HStack {
+                Text("Automatic updates")
+                Spacer()
+                Picker("", selection: Binding(
+                    get: { UpdateService.shared.isAutoUpdateEnabled },
+                    set: { UpdateService.shared.isAutoUpdateEnabled = $0 }
+                )) {
+                    Text("Yes").tag(true)
+                    Text("No").tag(false)
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 100)
+            }
+
+            HStack {
+                Button("Check for updates…") { UpdateService.shared.checkNow() }
+                Spacer()
+                let description = UpdateService.shared.lastCheckDescription
+                if !description.isEmpty {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Divider()
+
             VStack(alignment: .leading, spacing: 8) {
                 Text("Displays")
                     .font(.headline)
