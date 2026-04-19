@@ -28,6 +28,11 @@ struct SessionListView: View {
         VStack(spacing: 0) {
             appHeader
 
+            if UpdateService.shared.availableUpdate != nil {
+                UpdateAvailableBox(service: UpdateService.shared)
+                    .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))
+            }
+
             if !HookInstaller.isInstalled() || !HookInstaller.isOpenCodeHooksInstalled() {
                 HookSetupBox()
                     .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))

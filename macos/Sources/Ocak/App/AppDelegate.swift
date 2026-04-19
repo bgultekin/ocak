@@ -25,7 +25,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var settingsWindow: NSWindow?
     private var settingsModel: SettingsViewModel?
     private var processWatcher: ProcessWatcher?
-    
+    private let updateService = UpdateService.shared
+
     private let screenConfig = ScreenConfigStore.shared
     private var screenForDrawer: NSScreen?
     private let panelSizeStore = PanelSizeStore.shared
@@ -49,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
 
         setupAppearanceObserver()
+        updateService.checkOnLaunch()
     }
 
     private func setupAppearanceObserver() {

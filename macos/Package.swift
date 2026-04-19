@@ -8,11 +8,12 @@ let package = Package(
         .package(url: "https://github.com/migueldeicaza/SwiftTerm.git", from: "1.2.0"),
         .package(url: "https://github.com/sindresorhus/KeyboardShortcuts.git", from: "2.0.0"),
         .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.63.2"),
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.6.0"),
     ],
     targets: [
         .executableTarget(
             name: "Ocak",
-            dependencies: ["SwiftTerm", "KeyboardShortcuts"],
+            dependencies: ["SwiftTerm", "KeyboardShortcuts", "Sparkle"],
             path: "Sources/Ocak",
             resources: [
                 .copy("Resources/claude-ocak-marketplace"),
