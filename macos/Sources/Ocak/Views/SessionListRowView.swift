@@ -49,6 +49,10 @@ struct SessionListRowView: View {
         .padding(.vertical, 8)
         .background(isSelected ? OcakTheme.activeTint : Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(isSelected ? OcakTheme.activeBorder : Color.clear, lineWidth: 1)
+        )
         .contentShape(Rectangle())
         .onTapGesture { onSelect() }
         .contextMenu {
@@ -90,7 +94,7 @@ struct SessionListRowView: View {
         let symbolName = session.statusIcon
         return Image(systemName: symbolName)
             .font(.system(size: 10, weight: .semibold))
-            .foregroundColor(OcakTheme.sessionIconColor)
+            .foregroundColor(isSelected ? OcakTheme.activeIconColor : OcakTheme.sessionIconColor)
             .contentTransition(.symbolEffect(.replace))
             .shadow(color: glowColor, radius: 4)
             .padding(.top, 2)

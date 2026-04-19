@@ -22,9 +22,14 @@ enum OcakTheme {
         effectiveMode == .dark ? Color(hex: 0x242426) : Color(hex: 0xF5F5F7)
     }
 
-    static var activeTint: Color {
-        effectiveMode == .dark ? Color(hex: 0x0A84FF, alpha: 0.08) : Color(hex: 0x0A84FF, alpha: 0.06)
-    }
+    // oklch(0.75 0.165 45) ≈ sRGB(1.0, 0.530, 0.298) at 10% opacity (0.9 transparency)
+    static let activeTint = Color(red: 1.0, green: 0.530, blue: 0.298).opacity(0.1)
+
+    // oklch(0.75 0.165 45) ≈ sRGB(1.0, 0.530, 0.298)
+    static let activeIconColor = Color(red: 1.0, green: 0.530, blue: 0.298)
+
+    // oklch(0.75 0.165 45) ≈ sRGB(1.0, 0.530, 0.298) at 0.7 opacity
+    static let activeBorder = Color(red: 1.0, green: 0.530, blue: 0.298).opacity(0.7)
 
     static var statusBlueBackground: Color {
         effectiveMode == .dark ? Color(hex: 0x0A84FF).opacity(0.1) : Color(hex: 0x0A84FF).opacity(0.08)
@@ -67,6 +72,10 @@ enum OcakTheme {
 
     static var sectionLabel: Color {
         effectiveMode == .dark ? Color(hex: 0x636366) : Color(hex: 0x6C6C70)
+    }
+
+    static var sectionLabelHighlighted: Color {
+        effectiveMode == .dark ? Color(hex: 0xAEAEB2) : Color(hex: 0x1C1C1E)
     }
 
     // MARK: - Button backgrounds

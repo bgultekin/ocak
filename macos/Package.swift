@@ -22,6 +22,8 @@ let package = Package(
                 .process("Resources/ocak-menubar-icon-active.png"),
                 .process("Resources/ocak-app-icon-light.png"),
                 .process("Resources/ocak-app-icon-dark.png"),
+                .process("Resources/ocak-text-dark.png"),
+                .process("Resources/ocak-text-light.png"),
             ],
             plugins: [
                 .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins"),

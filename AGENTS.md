@@ -71,6 +71,9 @@ Session status updates come from two sources:
 - **ScreenConfigStore** — per-screen settings (e.g., which screen the drawer appears on).
 - **RibbonConfigStore** — ribbon appearance/behavior settings.
 
+### UI Terminology
+- Use **"terminal"** (not "session") in all user-facing UI text. Internal code/models use `session`/`SessionStore` etc., but labels, counts, and copy shown to the user say "terminal"/"terminals".
+
 ### Key Conventions
 - SwiftUI views are in `Views/`, AppKit panels in `Panels/`.
 - The `@Observable` macro is used for stores (not ObservableObject/Combine).
