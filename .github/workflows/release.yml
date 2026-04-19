@@ -35,10 +35,13 @@ jobs:
           VERSION="${VERSION#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          BUILD_NUMBER=$(git tag --sort=version:refname | grep -c "^v")
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
 
       - name: Build universal app and DMG
         env:
           APP_VERSION: ${{ steps.version.outputs.version }}
+          APP_BUILD: ${{ steps.version.outputs.build_number }}
           SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
           SPARKLE_FEED_URL: ${{ vars.SPARKLE_FEED_URL }}
         run: ./scripts/build-macos-app.sh
@@ -50,6 +53,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.version.outputs.tag }}
           REPO: ${{ github.repository }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
         run: ./scripts/generate-appcast.sh
 
       - name: Upload DMG artifact

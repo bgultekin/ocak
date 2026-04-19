@@ -7,6 +7,7 @@
 #   TAG                 - e.g. v0.8.0
 #   REPO                - GitHub slug, e.g. bgultekin/ocak
 #   SPARKLE_PRIVATE_KEY - EdDSA private key (Sparkle-generated base64 string)
+#   BUILD_NUMBER        - monotonically increasing integer (e.g. git tag count)
 #
 # The public counterpart is baked into the app's Info.plist via SPARKLE_PUBLIC_KEY
 # at build time. Generate the keypair once with Sparkle's `generate_keys` binary
@@ -25,6 +26,7 @@ APPCAST_PATH="$DIST_DIR/appcast.xml"
 : "${TAG:?TAG is required}"
 : "${REPO:?REPO is required}"
 : "${SPARKLE_PRIVATE_KEY:?SPARKLE_PRIVATE_KEY is required}"
+: "${BUILD_NUMBER:?BUILD_NUMBER is required}"
 
 if [ ! -f "$DMG_PATH" ]; then
     echo "error: $DMG_PATH not found" >&2
@@ -76,7 +78,7 @@ cat > "$APPCAST_PATH" <<XML
         <item>
             <title>Ocak $VERSION</title>
             <pubDate>$PUB_DATE</pubDate>
-            <sparkle:version>$VERSION</sparkle:version>
+            <sparkle:version>$BUILD_NUMBER</sparkle:version>
             <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:releaseNotesLink>$RELEASE_NOTES_URL</sparkle:releaseNotesLink>

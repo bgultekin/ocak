@@ -10,6 +10,9 @@ DIST_DIR="$REPO_ROOT/.dist"
 
 # Version can be overridden at build time: APP_VERSION=1.2.3 ./scripts/build-macos-app.sh
 APP_VERSION="${APP_VERSION:-0.1.0}"
+# Monotonically increasing integer for Sparkle version comparison (CFBundleVersion).
+# Must be passed explicitly in CI; local builds get 1.
+APP_BUILD="${APP_BUILD:-1}"
 
 echo "Building release binaries for Apple Silicon and Intel..."
 cd "$SPM_DIR"
@@ -116,7 +119,7 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>$APP_BUILD</string>
     <key>CFBundleShortVersionString</key>
     <string>$APP_VERSION</string>
     <key>SUFeedURL</key>
