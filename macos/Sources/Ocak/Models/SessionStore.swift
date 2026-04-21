@@ -296,7 +296,6 @@ final class SessionStore {
             return
         }
 
-        // Don't overwrite .done with working events (late tool events after session.idle)
         // Don't overwrite .done with working events (late tool events after session ended).
         // SessionStart and UserPromptSubmit are intentionally excluded — they represent a new
         // Claude invocation in the same terminal and should re-activate the session.
