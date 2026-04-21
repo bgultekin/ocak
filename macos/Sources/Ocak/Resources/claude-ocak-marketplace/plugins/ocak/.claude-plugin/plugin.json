@@ -6,6 +6,18 @@
     "name": "Bilal"
   },
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c '[ -z \"$OCAK_SESSION_ID\" ] && exit 0; curl -sf -X POST http://localhost:27832/hook -H \"Content-Type: application/json\" -H \"X-Ocak-Session: $OCAK_SESSION_ID\" -d @- || true'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": ".*",

@@ -264,11 +264,24 @@ final class SessionStore {
     }
 
     func updateDetectedAgent(_ id: UUID, detectedAgent: AITool?) {
-        if let idx = sessions.firstIndex(where: { $0.id == id }) {
-            guard sessions[idx].isAgentRunning != (detectedAgent != nil) ||
-                  sessions[idx].detectedAgent != detectedAgent else { return }
-            sessions[idx].isAgentRunning = detectedAgent != nil
-            sessions[idx].detectedAgent = detectedAgent
+        guard let idx = sessions.firstIndex(where: { $0.id == id }) else { return }
+        let wasRunning = sessions[idx].isAgentRunning
+        let nowRunning = detectedAgent != nil
+        guard wasRunning != nowRunning || sessions[idx].detectedAgent != detectedAgent else { return }
+
+        sessions[idx].isAgentRunning = nowRunning
+        sessions[idx].detectedAgent = detectedAgent
+
+        // Agent disappeared while session was active → auto-complete (covers crashes/kills with no Stop hook)
+        if wasRunning && !nowRunning {
+            let current = sessions[idx].status
+            if current == .working || current == .needs_input {
+                sessions[idx].status = .done
+                if current == .working {
+                    lastCompletionTime = Date()
+                    triggerSuccessFlash()
+                }
+            }
         }
     }
 
@@ -284,9 +297,12 @@ final class SessionStore {
         }
 
         // Don't overwrite .done with working events (late tool events after session.idle)
+        // Don't overwrite .done with working events (late tool events after session ended).
+        // SessionStart and UserPromptSubmit are intentionally excluded — they represent a new
+        // Claude invocation in the same terminal and should re-activate the session.
         if sessions[idx].status == .done {
             switch event.hookEventName {
-            case "PostToolUse", "SessionStart", "UserPromptSubmit", "PreToolUse",
+            case "PostToolUse", "PreToolUse",
                  "PostToolUseFailure", "SubagentStart", "SubagentStop", "TeammateIdle",
                  "InstructionsLoaded", "ConfigChange", "WorktreeCreate", "WorktreeRemove",
                  "PreCompact", "PostCompact", "ShellCommandStart":
