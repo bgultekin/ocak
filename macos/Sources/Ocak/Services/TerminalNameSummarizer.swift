@@ -79,7 +79,14 @@ enum TerminalNameSummarizer {
 
         if readGroup.wait(timeout: .now() + 30) == .timedOut {
             proc.terminate()
-            proc.waitUntilExit()
+            // Wait up to 5 seconds for process to terminate after SIGTERM
+            let waited = DispatchGroup()
+            waited.enter()
+            DispatchQueue.global(qos: .utility).async {
+                proc.waitUntilExit()
+                waited.leave()
+            }
+            _ = waited.wait(timeout: .now() + 5)
             return nil
         }
 
@@ -123,7 +130,16 @@ enum TerminalNameSummarizer {
         } catch {
             return nil
         }
-        proc.waitUntilExit()
+        let waited = DispatchGroup()
+        waited.enter()
+        DispatchQueue.global(qos: .utility).async {
+            proc.waitUntilExit()
+            waited.leave()
+        }
+        if waited.wait(timeout: .now() + 10) == .timedOut {
+            proc.terminate()
+            return nil
+        }
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         let value = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
         return (value?.isEmpty ?? true) ? nil : value

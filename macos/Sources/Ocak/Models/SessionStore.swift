@@ -209,6 +209,7 @@ final class SessionStore {
         TerminalManager.shared.removeTerminal(for: id)
         let idx = sessions.firstIndex(where: { $0.id == id })
         sessions.removeAll { $0.id == id }
+        summariesInFlight.remove(id)
         if activeSessionID == id {
             if let idx {
                 if idx > 0, idx - 1 < sessions.count {
