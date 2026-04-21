@@ -12,7 +12,16 @@ struct TerminalSwiftUIView: NSViewRepresentable {
     var onStatusChange: ((SessionStatus) -> Void)?
     var onDirectoryChange: ((String) -> Void)?
 
+    final class Coordinator {
+        /// Set to true by makeNSView so the first updateNSView call after creation
+        /// can schedule a bounds check. Reset immediately after scheduling.
+        var needsBoundsCheck = false
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSView(context: Context) -> NSView {
+        context.coordinator.needsBoundsCheck = true
         // Container that holds the terminal view
         let container = NSView(frame: .zero)
         let termView = TerminalManager.shared.terminal(
@@ -68,6 +77,29 @@ struct TerminalSwiftUIView: NSViewRepresentable {
                 termView.topAnchor.constraint(equalTo: nsView.topAnchor),
                 termView.bottomAnchor.constraint(equalTo: nsView.bottomAnchor),
             ])
+        }
+
+        // Fallback: if the terminal still has zero bounds after the current run-loop turn
+        // (container was zero when makeNSView ran and AutoLayout hasn't propagated yet),
+        // re-parent once the container has its real size so SwiftTerm gets a valid layout.
+        // Only scheduled once — immediately after makeNSView via the coordinator flag.
+        if context.coordinator.needsBoundsCheck {
+            context.coordinator.needsBoundsCheck = false
+            DispatchQueue.main.async { [weak nsView] in
+                guard let nsView,
+                      termView.superview === nsView,
+                      termView.bounds.isEmpty,
+                      !nsView.bounds.isEmpty else { return }
+                nsView.subviews.forEach { $0.removeFromSuperview() }
+                termView.removeFromSuperview()
+                nsView.addSubview(termView)
+                NSLayoutConstraint.activate([
+                    termView.leadingAnchor.constraint(equalTo: nsView.leadingAnchor),
+                    termView.trailingAnchor.constraint(equalTo: nsView.trailingAnchor),
+                    termView.topAnchor.constraint(equalTo: nsView.topAnchor),
+                    termView.bottomAnchor.constraint(equalTo: nsView.bottomAnchor),
+                ])
+            }
         }
 
         // Schedule focus with a delay — ensures button tap is fully processed first.

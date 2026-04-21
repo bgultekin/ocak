@@ -28,8 +28,13 @@ final class OcakTerminalView: LocalProcessTerminalView {
     }
 
     override func layout() {
+        // Skip SwiftTerm layout when bounds are zero — avoids sending a 0-col SIGWINCH
+        // to the running process during the brief zero-size phase that occurs each time
+        // the drawer is reopened (makeNSView creates a frame:.zero container and AutoLayout
+        // propagates the real size only after SwiftUI's next layout pass).
+        guard bounds.width > 0, bounds.height > 0 else { return }
         super.layout()
-        if let data = pendingHistoryReplay, bounds.width > 0, bounds.height > 0 {
+        if let data = pendingHistoryReplay {
             pendingHistoryReplay = nil
             let cleaned = Self.strippedMouseReports(from: data)
             suppressingResponses = true
