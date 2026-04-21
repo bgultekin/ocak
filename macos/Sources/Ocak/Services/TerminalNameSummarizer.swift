@@ -29,8 +29,11 @@ enum TerminalNameSummarizer {
     Request:
     """
 
+    // Computed once at first use; PATH doesn't change during app lifetime.
+    private static let cachedLoginPath: String? = resolveLoginPath()
+
     private static func runSummarizer(prompt: String) -> String? {
-        let loginPath = loginPath()
+        let loginPath = cachedLoginPath
         guard let claudePath = findExecutable("claude", loginPath: loginPath) else {
             return nil
         }
@@ -64,11 +67,14 @@ enum TerminalNameSummarizer {
             return nil
         }
 
-        var stdoutData = Data()
+        // Use a class so the captured reference is heap-managed even if we return early
+        // from the timeout path while the async reads are still in flight.
+        final class DataHolder: @unchecked Sendable { var data = Data() }
+        let stdoutHolder = DataHolder()
         let readGroup = DispatchGroup()
         readGroup.enter()
         DispatchQueue.global().async {
-            stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+            stdoutHolder.data = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
             readGroup.leave()
         }
         readGroup.enter()
@@ -79,7 +85,9 @@ enum TerminalNameSummarizer {
 
         if readGroup.wait(timeout: .now() + 30) == .timedOut {
             proc.terminate()
-            // Wait up to 5 seconds for process to terminate after SIGTERM
+            // Wait up to 5 seconds for process to terminate after SIGTERM; once the
+            // process exits its pipe write-ends close, letting the async reads above
+            // drain and release stdoutHolder.
             let waited = DispatchGroup()
             waited.enter()
             DispatchQueue.global(qos: .utility).async {
@@ -93,7 +101,7 @@ enum TerminalNameSummarizer {
         proc.waitUntilExit()
         guard proc.terminationStatus == 0 else { return nil }
 
-        let raw = String(data: stdoutData, encoding: .utf8) ?? ""
+        let raw = String(data: stdoutHolder.data, encoding: .utf8) ?? ""
         return sanitize(raw)
     }
 
@@ -117,7 +125,7 @@ enum TerminalNameSummarizer {
         return name.capitalized
     }
 
-    private static func loginPath() -> String? {
+    private static func resolveLoginPath() -> String? {
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/bin/zsh")
         proc.arguments = ["-l", "-c", "echo $PATH"]
@@ -138,6 +146,10 @@ enum TerminalNameSummarizer {
         }
         if waited.wait(timeout: .now() + 10) == .timedOut {
             proc.terminate()
+            // Drain the pipe so its buffer is released and the FD can be closed.
+            DispatchQueue.global(qos: .background).async {
+                _ = pipe.fileHandleForReading.readDataToEndOfFile()
+            }
             return nil
         }
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
