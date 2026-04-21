@@ -13,6 +13,8 @@ struct SessionListRowView: View {
     @State private var draftName = ""
     @FocusState private var renameFieldFocused: Bool
     @State private var outsideClickMonitor: Any?
+    @State private var displayedName: String = ""
+    @State private var typingTask: Task<Void, Never>?
 
     var body: some View {
         HStack(spacing: 10) {
@@ -31,7 +33,7 @@ struct SessionListRowView: View {
                             if !focused { commitRename() }
                         }
                 } else {
-                    Text(session.name)
+                    Text(displayedName)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(OcakTheme.labelPrimary)
                         .lineLimit(1)
@@ -67,7 +69,18 @@ struct SessionListRowView: View {
                 removeOutsideClickMonitor()
             }
         }
-        .onDisappear { removeOutsideClickMonitor() }
+        .onAppear { displayedName = session.name }
+        .onChange(of: session.name) { _, newName in
+            guard !isRenaming else {
+                displayedName = newName
+                return
+            }
+            animateTyping(newName)
+        }
+        .onDisappear {
+            removeOutsideClickMonitor()
+            typingTask?.cancel()
+        }
     }
 
     private var gitInfoLabel: some View {
@@ -118,6 +131,19 @@ struct SessionListRowView: View {
         case .working: return ("Running", OcakTheme.statusBlue)
         case .needs_input: return ("Needs Input", OcakTheme.statusAmber)
         case .done: return ("Done", OcakTheme.statusGreen)
+        }
+    }
+
+    private func animateTyping(_ name: String) {
+        typingTask?.cancel()
+        typingTask = Task { @MainActor in
+            displayedName = ""
+            for char in name {
+                try? await Task.sleep(nanoseconds: 45_000_000)
+                guard !Task.isCancelled else { break }
+                displayedName.append(char)
+            }
+            if !Task.isCancelled { displayedName = name }
         }
     }
 

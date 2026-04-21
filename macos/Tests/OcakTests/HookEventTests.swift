@@ -8,6 +8,7 @@ private struct HookEvent: Decodable {
     let cwd: String
     let notificationType: String?
     let toolName: String?
+    let prompt: String?
     var ocakSessionId: String?
 
     enum CodingKeys: String, CodingKey {
@@ -16,6 +17,7 @@ private struct HookEvent: Decodable {
         case cwd
         case notificationType = "notification_type"
         case toolName = "tool_name"
+        case prompt
     }
 }
 
@@ -76,6 +78,20 @@ struct HookEventTests {
         """
         let event = try JSONDecoder().decode(HookEvent.self, from: Data(jsonString.utf8))
         #expect(event.hookEventName == "Stop")
+    }
+
+    @Test("Decode UserPromptSubmit event with prompt field")
+    func decode_userPromptSubmitWithPrompt() throws {
+        let jsonString = """
+        {
+            "hook_event_name": "UserPromptSubmit",
+            "session_id": "abc-123",
+            "cwd": "/tmp",
+            "prompt": "Write a function to calculate the factorial of a number"
+        }
+        """
+        let event = try JSONDecoder().decode(HookEvent.self, from: Data(jsonString.utf8))
+        #expect(event.prompt == "Write a function to calculate the factorial of a number")
     }
 
     @Test("Decode SessionEnd event")
