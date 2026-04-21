@@ -70,6 +70,26 @@ struct TerminalSwiftUIView: NSViewRepresentable {
             ])
         }
 
+        // Fallback: if the terminal still has zero bounds after the current run-loop turn
+        // (container was zero when makeNSView ran and AutoLayout hasn't propagated yet),
+        // re-parent once the container has its real size so SwiftTerm gets a valid layout.
+        DispatchQueue.main.async { [weak termViewRef = termView] in
+            guard let termViewRef,
+                  termViewRef.superview === nsView,
+                  termViewRef.bounds.isEmpty,
+                  !nsView.bounds.isEmpty else { return }
+            nsView.subviews.forEach { $0.removeFromSuperview() }
+            termViewRef.removeFromSuperview()
+            termViewRef.translatesAutoresizingMaskIntoConstraints = false
+            nsView.addSubview(termViewRef)
+            NSLayoutConstraint.activate([
+                termViewRef.leadingAnchor.constraint(equalTo: nsView.leadingAnchor),
+                termViewRef.trailingAnchor.constraint(equalTo: nsView.trailingAnchor),
+                termViewRef.topAnchor.constraint(equalTo: nsView.topAnchor),
+                termViewRef.bottomAnchor.constraint(equalTo: nsView.bottomAnchor),
+            ])
+        }
+
         // Schedule focus with a delay — ensures button tap is fully processed first.
         // Skip if a text field is already focused (e.g., session rename input).
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
