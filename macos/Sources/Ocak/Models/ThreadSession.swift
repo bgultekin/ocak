@@ -39,6 +39,15 @@ struct ThreadSession: Identifiable, Codable {
     var command: String
     var order: Int
     var createdAt: Date
+    /// True once the user has manually renamed the session. Monotonic — once set, the
+    /// summarizer never touches the name again. Persisted so manual names survive restarts.
+    var hasManualName: Bool = false
+    /// The agent's own session id (from the hook payload's `session_id`) that we last used
+    /// to auto-name this terminal. When a new prompt arrives carrying a different id
+    /// (e.g. after `/clear`, `/new`, or a fresh `claude` invocation), the summarizer runs
+    /// again. Persisted so we don't re-rename across app restarts for the same agent
+    /// session.
+    var lastAutoNamedAgentSessionId: String?
     /// Runtime-only: true when the AI agent process is detected as a descendant of this session's shell.
     /// Not persisted — resets to false on restore. Excluded from CodingKeys intentionally.
     var isAgentRunning: Bool = false
@@ -46,7 +55,8 @@ struct ThreadSession: Identifiable, Codable {
     /// Falls back to `aiTool` for icon display. Excluded from CodingKeys intentionally.
     var detectedAgent: AITool? = nil
     enum CodingKeys: String, CodingKey {
-        case id, name, workingDirectory, groupID, aiTool, status, command, order, createdAt
+        case id, name, workingDirectory, groupID, aiTool, status, command, order, createdAt,
+             hasManualName, lastAutoNamedAgentSessionId
     }
 
     init(
@@ -57,7 +67,8 @@ struct ThreadSession: Identifiable, Codable {
         aiTool: AITool = .claudeCode,
         command: String = "",
         status: SessionStatus = .new,
-        order: Int = 0
+        order: Int = 0,
+        hasManualName: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -68,6 +79,26 @@ struct ThreadSession: Identifiable, Codable {
         self.status = status
         self.order = order
         self.createdAt = Date()
+        self.hasManualName = hasManualName
+        self.lastAutoNamedAgentSessionId = nil
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        workingDirectory = try c.decode(String.self, forKey: .workingDirectory)
+        groupID = try c.decode(UUID.self, forKey: .groupID)
+        aiTool = try c.decode(AITool.self, forKey: .aiTool)
+        status = try c.decode(SessionStatus.self, forKey: .status)
+        command = try c.decode(String.self, forKey: .command)
+        order = try c.decode(Int.self, forKey: .order)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        // Legacy sessions predate `hasManualName`; treat them as already-named so we don't
+        // overwrite a name the user may have been keeping across the upgrade.
+        hasManualName = try c.decodeIfPresent(Bool.self, forKey: .hasManualName) ?? true
+        lastAutoNamedAgentSessionId = try c.decodeIfPresent(
+            String.self, forKey: .lastAutoNamedAgentSessionId)
     }
 
     var shortPath: String {

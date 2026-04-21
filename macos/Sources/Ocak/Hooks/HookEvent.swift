@@ -8,6 +8,8 @@ struct HookEvent: Decodable {
     let cwd: String
     let notificationType: String?
     let toolName: String?
+    /// User prompt text, present on `UserPromptSubmit` events.
+    let prompt: String?
     /// Set by HookServer from the X-Ocak-Session HTTP header, not from the JSON body.
     var ocakSessionId: String?
 
@@ -17,6 +19,7 @@ struct HookEvent: Decodable {
         case cwd
         case notificationType = "notification_type"
         case toolName = "tool_name"
+        case prompt
     }
 
     init(from decoder: Decoder) throws {
@@ -26,5 +29,6 @@ struct HookEvent: Decodable {
         cwd = try c.decodeIfPresent(String.self, forKey: .cwd) ?? ""
         notificationType = try c.decodeIfPresent(String.self, forKey: .notificationType)
         toolName = try c.decodeIfPresent(String.self, forKey: .toolName)
+        prompt = try c.decodeIfPresent(String.self, forKey: .prompt)
     }
 }
