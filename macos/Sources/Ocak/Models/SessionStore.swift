@@ -309,6 +309,7 @@ final class SessionStore {
 
         // Agent disappeared while session was active → auto-complete (covers crashes/kills with no Stop hook)
         if wasRunning && !nowRunning {
+            sessions[idx].agentSessionActive = false
             let current = sessions[idx].status
             if current == .working || current == .needs_input {
                 sessions[idx].status = .done
@@ -354,15 +355,23 @@ final class SessionStore {
             }
         }
 
-        // ShellCommandStart is dropped while an agent is running (agent events take precedence).
-        // ShellCommandEnd is intentionally NOT dropped — it fires when the shell prompt returns
-        // (i.e. the foreground process exited) and serves as a fallback completion signal when
-        // the Stop hook is unavailable (e.g. plugin not installed on this account).
+        // Any agent-originated event implies Claude/OpenCode is alive in this terminal. Set the
+        // flag here so subsequent ShellCommandStart events can be suppressed even when
+        // ProcessDetector fails to recognise the agent (e.g. a Node-wrapped `claude` binary
+        // where proc_pidpath resolves to the node interpreter). Cleared by SessionEnd /
+        // ShellCommandEnd or when the watcher sees the agent process actually disappear.
+        if Self.isAgentOriginatedEvent(event.hookEventName) {
+            sessions[idx].agentSessionActive = true
+        }
+
+        // ShellCommandStart is dropped while an agent session is active (agent events take
+        // precedence). ShellCommandEnd is intentionally NOT dropped — it fires when the shell
+        // prompt returns (foreground process exited) and serves as a fallback completion
+        // signal when the Stop hook is unavailable (e.g. plugin not installed).
         if event.hookEventName == "ShellCommandStart" {
             // ProcessWatcher polls every 2s, so just after the user launched `claude` the cached
             // `isAgentRunning` flag can still be stale-false. Do a one-shot tree probe against
-            // this session's shell PID so we catch the agent immediately and avoid a brief
-            // "Running" flash while Claude is actually idle at its prompt.
+            // this session's shell PID so we catch the agent immediately.
             if !sessions[idx].isAgentRunning,
                let shellPid = TerminalManager.shared.shellPid(for: sessions[idx].id) {
                 let sessionID = sessions[idx].id
@@ -372,7 +381,7 @@ final class SessionStore {
                     sessions[idx].detectedAgent = tool
                 }
             }
-            if sessions[idx].isAgentRunning { return }
+            if sessions[idx].isAgentRunning || sessions[idx].agentSessionActive { return }
         }
 
         // Don't overwrite .done with working events (late tool events after session ended).
@@ -427,9 +436,34 @@ final class SessionStore {
         } else {
             sessions[idx].workingFromShellCommand = false
         }
+        // ShellCommandEnd fires only when the shell prompt returns (foreground process exited),
+        // so the agent is gone. SessionEnd is the explicit signal. Clear in both cases.
+        if event.hookEventName == "ShellCommandEnd" || event.hookEventName == "SessionEnd" {
+            sessions[idx].agentSessionActive = false
+        }
         if previous == .working && newStatus == .done {
             lastCompletionTime = Date()
             triggerSuccessFlash()
+        }
+    }
+
+    /// Hook events that originate from an AI agent process (Claude Code / OpenCode) rather
+    /// than from the user's shell. Observing any of these means an agent session is alive
+    /// in the associated terminal.
+    private static func isAgentOriginatedEvent(_ name: String) -> Bool {
+        switch name {
+        case "SessionStart", "UserPromptSubmit",
+             "PreToolUse", "PostToolUse", "PostToolUseFailure",
+             "SubagentStart", "SubagentStop", "TeammateIdle",
+             "InstructionsLoaded", "ConfigChange",
+             "WorktreeCreate", "WorktreeRemove",
+             "PreCompact", "PostCompact",
+             "PermissionRequest", "Notification", "TaskCompleted",
+             "Elicitation", "ElicitationResult",
+             "Stop", "StopFailure":
+            return true
+        default:
+            return false
         }
     }
 
@@ -535,6 +569,7 @@ final class SessionStore {
             sessions[i].isAgentRunning = false
             sessions[i].detectedAgent = nil
             sessions[i].workingFromShellCommand = false
+            sessions[i].agentSessionActive = false
         }
     }
 

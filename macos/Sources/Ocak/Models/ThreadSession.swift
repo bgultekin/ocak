@@ -59,6 +59,12 @@ struct ThreadSession: Identifiable, Codable {
     /// so launching `claude` doesn't leave a "Running" flash while it sits idle at the prompt.
     /// Cleared by any other status-changing event (agent hook, ShellCommandEnd, etc.).
     var workingFromShellCommand: Bool = false
+    /// Runtime-only: true when we've seen any agent-originated hook for this terminal
+    /// (SessionStart, UserPromptSubmit, PreToolUse, etc.) and haven't yet seen a SessionEnd
+    /// or a ShellCommandEnd signalling the agent exited. While active, raw shell status
+    /// events (ShellCommandStart) are dropped so they can't overwrite agent-driven status
+    /// even when `ProcessDetector` fails to detect the agent (e.g. Node-wrapped `claude`).
+    var agentSessionActive: Bool = false
     enum CodingKeys: String, CodingKey {
         case id, name, workingDirectory, groupID, aiTool, status, command, order, createdAt,
              hasManualName, lastAutoNamedAgentSessionId
