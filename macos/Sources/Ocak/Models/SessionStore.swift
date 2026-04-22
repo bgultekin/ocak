@@ -346,8 +346,21 @@ final class SessionStore {
         // ShellCommandEnd is intentionally NOT dropped — it fires when the shell prompt returns
         // (i.e. the foreground process exited) and serves as a fallback completion signal when
         // the Stop hook is unavailable (e.g. plugin not installed on this account).
-        if sessions[idx].isAgentRunning && event.hookEventName == "ShellCommandStart" {
-            return
+        if event.hookEventName == "ShellCommandStart" {
+            // ProcessWatcher polls every 2s, so just after the user launched `claude` the cached
+            // `isAgentRunning` flag can still be stale-false. Do a one-shot tree probe against
+            // this session's shell PID so we catch the agent immediately and avoid a brief
+            // "Running" flash while Claude is actually idle at its prompt.
+            if !sessions[idx].isAgentRunning,
+               let shellPid = TerminalManager.shared.shellPid(for: sessions[idx].id) {
+                let sessionID = sessions[idx].id
+                let results = ProcessDetector.agentRunning(shellPids: [shellPid: sessionID])
+                if let detected = results[sessionID], let tool = detected {
+                    sessions[idx].isAgentRunning = true
+                    sessions[idx].detectedAgent = tool
+                }
+            }
+            if sessions[idx].isAgentRunning { return }
         }
 
         // Don't overwrite .done with working events (late tool events after session ended).
