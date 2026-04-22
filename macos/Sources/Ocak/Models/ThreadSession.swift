@@ -54,6 +54,11 @@ struct ThreadSession: Identifiable, Codable {
     /// Runtime-only: which agent binary is actually running (detected via process scan).
     /// Falls back to `aiTool` for icon display. Excluded from CodingKeys intentionally.
     var detectedAgent: AITool? = nil
+    /// Runtime-only: true when the current `.working` status was set by a `ShellCommandStart`
+    /// rather than a real agent event. Used to reset back to `.new` once the agent is detected,
+    /// so launching `claude` doesn't leave a "Running" flash while it sits idle at the prompt.
+    /// Cleared by any other status-changing event (agent hook, ShellCommandEnd, etc.).
+    var workingFromShellCommand: Bool = false
     enum CodingKeys: String, CodingKey {
         case id, name, workingDirectory, groupID, aiTool, status, command, order, createdAt,
              hasManualName, lastAutoNamedAgentSessionId

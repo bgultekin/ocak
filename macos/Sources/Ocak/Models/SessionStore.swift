@@ -296,11 +296,23 @@ final class SessionStore {
         sessions[idx].isAgentRunning = nowRunning
         sessions[idx].detectedAgent = detectedAgent
 
+        // Agent just appeared (e.g. user launched `claude`). If the current .working was set by
+        // a stale ShellCommandStart rather than real activity, reset to .new so we show "Idle"
+        // while the agent sits at its prompt. Real .working from UserPromptSubmit/tool events
+        // clears the flag and won't be reset here.
+        if !wasRunning && nowRunning,
+           sessions[idx].status == .working,
+           sessions[idx].workingFromShellCommand {
+            sessions[idx].status = .new
+            sessions[idx].workingFromShellCommand = false
+        }
+
         // Agent disappeared while session was active → auto-complete (covers crashes/kills with no Stop hook)
         if wasRunning && !nowRunning {
             let current = sessions[idx].status
             if current == .working || current == .needs_input {
                 sessions[idx].status = .done
+                sessions[idx].workingFromShellCommand = false
                 if current == .working {
                     lastCompletionTime = Date()
                     triggerSuccessFlash()
@@ -408,6 +420,13 @@ final class SessionStore {
 
         let previous = sessions[idx].status
         sessions[idx].status = newStatus
+        // Track whether the current .working came from a ShellCommandStart so a later
+        // agent-detected transition can reset it to .new (see updateDetectedAgent).
+        if newStatus == .working {
+            sessions[idx].workingFromShellCommand = (event.hookEventName == "ShellCommandStart")
+        } else {
+            sessions[idx].workingFromShellCommand = false
+        }
         if previous == .working && newStatus == .done {
             lastCompletionTime = Date()
             triggerSuccessFlash()
@@ -515,6 +534,7 @@ final class SessionStore {
             sessions[i].status = .new
             sessions[i].isAgentRunning = false
             sessions[i].detectedAgent = nil
+            sessions[i].workingFromShellCommand = false
         }
     }
 
