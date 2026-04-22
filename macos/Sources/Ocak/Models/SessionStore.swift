@@ -379,6 +379,13 @@ final class SessionStore {
                 if let detected = results[sessionID], let tool = detected {
                     sessions[idx].isAgentRunning = true
                     sessions[idx].detectedAgent = tool
+                    // If the terminal was previously marked .done, the probe catching a live
+                    // agent means the user just started a fresh run. Treat it as a new session
+                    // so the UI doesn't stay stuck on the completed state when SessionStart /
+                    // UserPromptSubmit hooks are unavailable or delayed.
+                    if sessions[idx].status == .done {
+                        sessions[idx].status = .new
+                    }
                 }
             }
             if sessions[idx].isAgentRunning || sessions[idx].agentSessionActive { return }
