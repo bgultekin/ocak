@@ -58,8 +58,9 @@ enum ProcessDetector {
             let len = proc_pidpath(pid, &pathBuf, UInt32(pathBuf.count))
             if len > 0 {
                 let path = String(cString: pathBuf)
-                if path.contains("/claude") { return .claudeCode }
-                if path.contains("/opencode") { return .opencode }
+                let exeName = (path as NSString).lastPathComponent
+                if exeName == "claude" { return .claudeCode }
+                if exeName == "opencode" { return .opencode }
             }
             queue.append(contentsOf: children[pid] ?? [])
         }

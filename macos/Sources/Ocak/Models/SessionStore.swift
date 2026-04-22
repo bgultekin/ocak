@@ -342,9 +342,11 @@ final class SessionStore {
             }
         }
 
-        // Shell-level events are dropped while an agent is running (agent events take precedence)
-        if sessions[idx].isAgentRunning &&
-            (event.hookEventName == "ShellCommandStart" || event.hookEventName == "ShellCommandEnd") {
+        // ShellCommandStart is dropped while an agent is running (agent events take precedence).
+        // ShellCommandEnd is intentionally NOT dropped — it fires when the shell prompt returns
+        // (i.e. the foreground process exited) and serves as a fallback completion signal when
+        // the Stop hook is unavailable (e.g. plugin not installed on this account).
+        if sessions[idx].isAgentRunning && event.hookEventName == "ShellCommandStart" {
             return
         }
 
