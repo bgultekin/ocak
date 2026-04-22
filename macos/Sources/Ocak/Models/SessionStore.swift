@@ -352,7 +352,8 @@ final class SessionStore {
 
         // Don't overwrite .done with working events (late tool events after session ended).
         // SessionStart and UserPromptSubmit are intentionally excluded — they represent a new
-        // Claude invocation in the same terminal and should re-activate the session.
+        // Claude invocation in the same terminal and should re-activate the session
+        // (SessionStart resets to idle, UserPromptSubmit transitions to working).
         if sessions[idx].status == .done {
             switch event.hookEventName {
             case "PostToolUse", "PreToolUse",
@@ -370,7 +371,11 @@ final class SessionStore {
         case "PostToolUse":
             if sessions[idx].status == .needs_input { return }
             newStatus = .working
-        case "SessionStart", "UserPromptSubmit", "PreToolUse",
+        case "SessionStart":
+            // Claude just launched and is sitting idle at the prompt — not working yet.
+            // UserPromptSubmit (below) flips to .working once the user actually submits a prompt.
+            newStatus = .new
+        case "UserPromptSubmit", "PreToolUse",
              "PostToolUseFailure", "SubagentStart", "SubagentStop", "TeammateIdle",
              "InstructionsLoaded", "ConfigChange", "WorktreeCreate", "WorktreeRemove",
              "PreCompact", "PostCompact":

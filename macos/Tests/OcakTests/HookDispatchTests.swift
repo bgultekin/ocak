@@ -16,7 +16,9 @@ private func dispatch(eventName: String, currentStatus: SessionStatus) -> Sessio
     case "PostToolUse":
         if currentStatus == .needs_input { return nil }
         return .working
-    case "SessionStart", "UserPromptSubmit", "PreToolUse",
+    case "SessionStart":
+        return .new
+    case "UserPromptSubmit", "PreToolUse",
          "PostToolUseFailure", "SubagentStart", "SubagentStop", "TeammateIdle",
          "InstructionsLoaded", "ConfigChange", "WorktreeCreate", "WorktreeRemove",
          "PreCompact", "PostCompact":
@@ -58,9 +60,14 @@ struct HookDispatchTests {
         #expect(dispatch(eventName: "PostToolUseFailure", currentStatus: .working) == .working)
     }
 
-    @Test("SessionStart -> working")
-    func sessionStart_setsWorking() {
-        #expect(dispatch(eventName: "SessionStart", currentStatus: .new) == .working)
+    @Test("SessionStart -> new (Claude just launched, not working yet)")
+    func sessionStart_setsNew() {
+        #expect(dispatch(eventName: "SessionStart", currentStatus: .new) == .new)
+    }
+
+    @Test("SessionStart after .done resets to .new (re-activated as idle)")
+    func sessionStart_fromDone_resetsToNew() {
+        #expect(dispatch(eventName: "SessionStart", currentStatus: .done) == .new)
     }
 
     @Test("PermissionRequest -> needs_input")
