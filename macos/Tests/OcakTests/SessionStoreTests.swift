@@ -18,9 +18,9 @@ private struct SessionState {
 
 /// Mirror of SessionStore.processHookEvent dispatch logic, extracted for unit testing.
 private func processEvent(eventName: String, session: inout SessionState) {
-    // Drop shell-level events while an agent is running
-    if session.isAgentRunning &&
-        (eventName == "ShellCommandStart" || eventName == "ShellCommandEnd") {
+    // Drop ShellCommandStart while an agent is running (agent events take precedence).
+    // ShellCommandEnd is intentionally NOT dropped — serves as fallback completion signal.
+    if session.isAgentRunning && eventName == "ShellCommandStart" {
         return
     }
 
@@ -42,7 +42,9 @@ private func processEvent(eventName: String, session: inout SessionState) {
     case "PostToolUse":
         if session.status == .needs_input { return }
         newStatus = .working
-    case "SessionStart", "UserPromptSubmit", "PreToolUse",
+    case "SessionStart":
+        newStatus = .new
+    case "UserPromptSubmit", "PreToolUse",
          "PostToolUseFailure", "SubagentStart", "SubagentStop", "TeammateIdle",
          "InstructionsLoaded", "ConfigChange", "WorktreeCreate", "WorktreeRemove",
          "PreCompact", "PostCompact":
@@ -103,11 +105,13 @@ struct SessionStoreTests {
         #expect(session.lastCompletionTime != nil)
     }
 
-    @Test("ShellCommandEnd with isAgentRunning=true -> status unchanged")
-    func shellCommandEnd_agentRunning_dropped() {
+    @Test("ShellCommandEnd with isAgentRunning=true -> .done (fallback completion signal)")
+    func shellCommandEnd_agentRunning_setsDone() {
+        // Even when an agent was detected, ShellCommandEnd is allowed through so the prompt-returned
+        // signal can complete a session when the Stop hook is unavailable (plugin not installed).
         var session = SessionState(status: .working, isAgentRunning: true)
         processEvent(eventName: "ShellCommandEnd", session: &session)
-        #expect(session.status == .working)
+        #expect(session.status == .done)
     }
 
     // MARK: - Late event suppression

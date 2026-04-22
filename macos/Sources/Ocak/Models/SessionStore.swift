@@ -296,11 +296,24 @@ final class SessionStore {
         sessions[idx].isAgentRunning = nowRunning
         sessions[idx].detectedAgent = detectedAgent
 
+        // Agent just appeared (e.g. user launched `claude`). If the current .working was set by
+        // a stale ShellCommandStart rather than real activity, reset to .new so we show "Idle"
+        // while the agent sits at its prompt. Real .working from UserPromptSubmit/tool events
+        // clears the flag and won't be reset here.
+        if !wasRunning && nowRunning,
+           sessions[idx].status == .working,
+           sessions[idx].workingFromShellCommand {
+            sessions[idx].status = .new
+            sessions[idx].workingFromShellCommand = false
+        }
+
         // Agent disappeared while session was active → auto-complete (covers crashes/kills with no Stop hook)
         if wasRunning && !nowRunning {
+            sessions[idx].agentSessionActive = false
             let current = sessions[idx].status
             if current == .working || current == .needs_input {
                 sessions[idx].status = .done
+                sessions[idx].workingFromShellCommand = false
                 if current == .working {
                     lastCompletionTime = Date()
                     triggerSuccessFlash()
@@ -342,15 +355,46 @@ final class SessionStore {
             }
         }
 
-        // Shell-level events are dropped while an agent is running (agent events take precedence)
-        if sessions[idx].isAgentRunning &&
-            (event.hookEventName == "ShellCommandStart" || event.hookEventName == "ShellCommandEnd") {
-            return
+        // Any agent-originated event implies Claude/OpenCode is alive in this terminal. Set the
+        // flag here so subsequent ShellCommandStart events can be suppressed even when
+        // ProcessDetector fails to recognise the agent (e.g. a Node-wrapped `claude` binary
+        // where proc_pidpath resolves to the node interpreter). Cleared by SessionEnd /
+        // ShellCommandEnd or when the watcher sees the agent process actually disappear.
+        if Self.isAgentOriginatedEvent(event.hookEventName) {
+            sessions[idx].agentSessionActive = true
+        }
+
+        // ShellCommandStart is dropped while an agent session is active (agent events take
+        // precedence). ShellCommandEnd is intentionally NOT dropped — it fires when the shell
+        // prompt returns (foreground process exited) and serves as a fallback completion
+        // signal when the Stop hook is unavailable (e.g. plugin not installed).
+        if event.hookEventName == "ShellCommandStart" {
+            // ProcessWatcher polls every 2s, so just after the user launched `claude` the cached
+            // `isAgentRunning` flag can still be stale-false. Do a one-shot tree probe against
+            // this session's shell PID so we catch the agent immediately.
+            if !sessions[idx].isAgentRunning,
+               let shellPid = TerminalManager.shared.shellPid(for: sessions[idx].id) {
+                let sessionID = sessions[idx].id
+                let results = ProcessDetector.agentRunning(shellPids: [shellPid: sessionID])
+                if let detected = results[sessionID], let tool = detected {
+                    sessions[idx].isAgentRunning = true
+                    sessions[idx].detectedAgent = tool
+                    // If the terminal was previously marked .done, the probe catching a live
+                    // agent means the user just started a fresh run. Treat it as a new session
+                    // so the UI doesn't stay stuck on the completed state when SessionStart /
+                    // UserPromptSubmit hooks are unavailable or delayed.
+                    if sessions[idx].status == .done {
+                        sessions[idx].status = .new
+                    }
+                }
+            }
+            if sessions[idx].isAgentRunning || sessions[idx].agentSessionActive { return }
         }
 
         // Don't overwrite .done with working events (late tool events after session ended).
         // SessionStart and UserPromptSubmit are intentionally excluded — they represent a new
-        // Claude invocation in the same terminal and should re-activate the session.
+        // Claude invocation in the same terminal and should re-activate the session
+        // (SessionStart resets to idle, UserPromptSubmit transitions to working).
         if sessions[idx].status == .done {
             switch event.hookEventName {
             case "PostToolUse", "PreToolUse",
@@ -368,7 +412,11 @@ final class SessionStore {
         case "PostToolUse":
             if sessions[idx].status == .needs_input { return }
             newStatus = .working
-        case "SessionStart", "UserPromptSubmit", "PreToolUse",
+        case "SessionStart":
+            // Claude just launched and is sitting idle at the prompt — not working yet.
+            // UserPromptSubmit (below) flips to .working once the user actually submits a prompt.
+            newStatus = .new
+        case "UserPromptSubmit", "PreToolUse",
              "PostToolUseFailure", "SubagentStart", "SubagentStop", "TeammateIdle",
              "InstructionsLoaded", "ConfigChange", "WorktreeCreate", "WorktreeRemove",
              "PreCompact", "PostCompact":
@@ -388,9 +436,41 @@ final class SessionStore {
 
         let previous = sessions[idx].status
         sessions[idx].status = newStatus
+        // Track whether the current .working came from a ShellCommandStart so a later
+        // agent-detected transition can reset it to .new (see updateDetectedAgent).
+        if newStatus == .working {
+            sessions[idx].workingFromShellCommand = (event.hookEventName == "ShellCommandStart")
+        } else {
+            sessions[idx].workingFromShellCommand = false
+        }
+        // ShellCommandEnd fires only when the shell prompt returns (foreground process exited),
+        // so the agent is gone. SessionEnd is the explicit signal. Clear in both cases.
+        if event.hookEventName == "ShellCommandEnd" || event.hookEventName == "SessionEnd" {
+            sessions[idx].agentSessionActive = false
+        }
         if previous == .working && newStatus == .done {
             lastCompletionTime = Date()
             triggerSuccessFlash()
+        }
+    }
+
+    /// Hook events that originate from an AI agent process (Claude Code / OpenCode) rather
+    /// than from the user's shell. Observing any of these means an agent session is alive
+    /// in the associated terminal.
+    private static func isAgentOriginatedEvent(_ name: String) -> Bool {
+        switch name {
+        case "SessionStart", "UserPromptSubmit",
+             "PreToolUse", "PostToolUse", "PostToolUseFailure",
+             "SubagentStart", "SubagentStop", "TeammateIdle",
+             "InstructionsLoaded", "ConfigChange",
+             "WorktreeCreate", "WorktreeRemove",
+             "PreCompact", "PostCompact",
+             "PermissionRequest", "Notification", "TaskCompleted",
+             "Elicitation", "ElicitationResult",
+             "Stop", "StopFailure":
+            return true
+        default:
+            return false
         }
     }
 
@@ -495,6 +575,8 @@ final class SessionStore {
             sessions[i].status = .new
             sessions[i].isAgentRunning = false
             sessions[i].detectedAgent = nil
+            sessions[i].workingFromShellCommand = false
+            sessions[i].agentSessionActive = false
         }
     }
 
