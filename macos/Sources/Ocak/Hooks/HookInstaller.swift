@@ -64,6 +64,30 @@ enum HookInstaller {
         markInstalled(false)
     }
 
+    /// Updates the installed ocak plugin if a newer version is bundled in the app.
+    /// Returns true if an update was performed, false if no update was needed.
+    @discardableResult
+    static func updatePluginIfNeeded() throws -> Bool {
+        let bundledVersion = try PluginVersionManager.readBundledPluginVersion()
+        let installedVersion = try PluginVersionManager.readInstalledPluginVersion()
+
+        guard let bundled = bundledVersion, let installed = installedVersion else {
+            return false
+        }
+
+        guard PluginVersionManager.isVersionGreater(bundled, than: installed) else {
+            return false
+        }
+
+        let loginPath = getLoginPath()
+        guard let claudePath = findExecutable("claude", loginPath: loginPath) else {
+            throw InstallError.commandFailed("claude not found in PATH")
+        }
+
+        try runShell("'\(claudePath)' plugin install ocak@ocak-plugins --scope user", loginPath: loginPath)
+        return true
+    }
+
     // MARK: - OpenCode
 
     /// Whether the OpenCode plugin file exists at the expected path.
