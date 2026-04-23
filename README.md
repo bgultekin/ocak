@@ -22,9 +22,7 @@ Ocak lives in your menu bar and hides a terminal drawer just off the right edge 
 
 
 
-https://github.com/user-attachments/assets/f67ad1a7-5184-4b12-b886-2f730066284a
-
-
+<img width="960" height="621" alt="gif" src="https://github.com/user-attachments/assets/6a740295-0693-4bfd-a111-c68092bc0343" />
 
 ---
 
@@ -44,6 +42,12 @@ Prefer to build it yourself? See [Build from source](#build-from-source) below.
 
 - macOS 14 (Sonoma) or newer
 - Swift 5.9+ toolchain (Xcode 15 or the command-line tools)
+
+---
+
+## Demo Video
+
+https://github.com/user-attachments/assets/da23a5cf-93c2-4eb4-8a13-8495b46a1f4e
 
 ## Features
 
