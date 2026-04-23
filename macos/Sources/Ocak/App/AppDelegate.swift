@@ -45,6 +45,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         setupStatusItem()
         setupProcessWatcher()
 
+        do {
+            let updated = try HookInstaller.updatePluginIfNeeded()
+            if updated {
+                print("[Ocak] Updated plugin to newer version")
+            }
+        } catch {
+            print("[Ocak] Plugin update check failed: \(error)")
+        }
+
         KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
             self?.toggleDrawer()
         }
@@ -328,7 +337,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         drawerPanel = panel
         store.isPanelVisible = true
-        panel.slideIn(on: screen, width: width, edge: panelEdge)
+        panel.slideIn(on: screen, width: width, edge: panelEdge) {
+            // After the slide-in animation completes the panel is fully on-screen and
+            // its CAContext is stable. Force a redraw so the persistent terminal views
+            // (re-parented into this fresh panel) flush their cached layer contents
+            // and draw into the new window. Without this, SwiftTerm can render as a
+            // solid background color (looks black) until the user clicks, because
+            // SwiftTerm only dirties itself inside setFrameSize / mouse events and the
+            // re-parent often lands on identical bounds across screens.
+            TerminalManager.shared.redrawAllTerminals()
+        }
     }
 
     private func dismissDrawer() {
