@@ -43,6 +43,7 @@ struct TerminalSwiftUIView: NSViewRepresentable {
             termView.topAnchor.constraint(equalTo: container.topAnchor),
             termView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
         ])
+        termView.needsDisplay = true
 
         // Make terminal first responder
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
@@ -77,6 +78,7 @@ struct TerminalSwiftUIView: NSViewRepresentable {
                 termView.topAnchor.constraint(equalTo: nsView.topAnchor),
                 termView.bottomAnchor.constraint(equalTo: nsView.bottomAnchor),
             ])
+            termView.needsDisplay = true
         }
 
         // Fallback: if the terminal still has zero bounds after the current run-loop turn
@@ -99,6 +101,7 @@ struct TerminalSwiftUIView: NSViewRepresentable {
                     termView.topAnchor.constraint(equalTo: nsView.topAnchor),
                     termView.bottomAnchor.constraint(equalTo: nsView.bottomAnchor),
                 ])
+                termView.needsDisplay = true
             }
         }
 

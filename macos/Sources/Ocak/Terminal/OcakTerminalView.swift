@@ -150,6 +150,15 @@ final class OcakTerminalView: LocalProcessTerminalView {
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        // The terminal view is persistent across drawer open/close cycles and gets
+        // re-parented into a fresh window each time the drawer is reopened. SwiftTerm
+        // only marks itself needsDisplay inside setFrameSize / mouse events, so when
+        // the new container ends up with the same final frame, the CALayer keeps its
+        // stale/empty backing store and the terminal renders black until the user
+        // clicks or switches sessions. Force a redraw on every window attach.
+        if window != nil {
+            needsDisplay = true
+        }
         arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self, window != nil else { return event }
             guard !terminal.keyboardEnhancementFlags.isEmpty else { return event }

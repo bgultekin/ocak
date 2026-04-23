@@ -91,6 +91,19 @@ final class TerminalManager {
         }
     }
 
+    /// Force every persistent terminal view to redraw. Used after the drawer finishes
+    /// sliding in on a new panel/screen: SwiftTerm only marks itself dirty inside
+    /// `setFrameSize` / mouse events, so when the view is re-parented into a fresh
+    /// window with unchanged final bounds, the CALayer keeps its stale backing store
+    /// and the terminal renders as a solid background color (looks black) until the
+    /// user clicks. Calling this after the panel is fully on-screen guarantees a
+    /// draw pass in the new window's compositor.
+    func redrawAllTerminals() {
+        for (_, termView) in terminals {
+            termView.needsDisplay = true
+        }
+    }
+
     // MARK: - Private
 
     private static func historyFilePath(for sessionID: UUID) -> String {
