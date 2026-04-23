@@ -28,6 +28,7 @@ final class UpdateService: NSObject {
     private(set) var availableUpdate: AvailableUpdate?
     private(set) var lastCheckDate: Date?
     private(set) var isCheckingForUpdates = false
+    private(set) var lastPluginUpdate: Date?
 
     var isAutoUpdateEnabled: Bool {
         didSet {
@@ -105,6 +106,17 @@ final class UpdateService: NSObject {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short
         return "Checked \(formatter.localizedString(for: lastCheckDate, relativeTo: Date()))"
+    }
+
+    var lastPluginUpdateDescription: String {
+        guard let lastPluginUpdate else { return "" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .short
+        return "Plugin updated \(formatter.localizedString(for: lastPluginUpdate, relativeTo: Date()))"
+    }
+
+    func recordPluginUpdate() {
+        lastPluginUpdate = Date()
     }
 
     // MARK: - Internal

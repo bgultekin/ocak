@@ -49,6 +49,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             let updated = try HookInstaller.updatePluginIfNeeded()
             if updated {
                 print("[Ocak] Updated plugin to newer version")
+                updateService.recordPluginUpdate()
             }
         } catch {
             print("[Ocak] Plugin update check failed: \(error)")
