@@ -77,7 +77,7 @@ final class DrawerPanel: NSPanel {
 
     // MARK: - Slide Animations
 
-    func slideIn(on screen: NSScreen, width: CGFloat, edge: PanelEdge) {
+    func slideIn(on screen: NSScreen, width: CGFloat, edge: PanelEdge, completion: (() -> Void)? = nil) {
         self.edge = edge
         let visibleFrame = screen.visibleFrame
         let panelHeight = visibleFrame.height
@@ -119,6 +119,7 @@ final class DrawerPanel: NSPanel {
             self.makeKey()
             self.orderFrontRegardless()
             self.installClickOutsideMonitor()
+            completion?()
         }
     }
 

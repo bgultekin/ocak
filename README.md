@@ -51,53 +51,38 @@ https://github.com/user-attachments/assets/da23a5cf-93c2-4eb4-8a13-8495b46a1f4e
 
 ## Features
 
-### Slide-out drawer
+### 🖥️ Terminal experience
 
-The drawer tucks away on the right edge of your screen and glides in when you want it. No dock icon, no main window — it stays out of sight until you reach for it, and gets out of the way the moment you click somewhere else.
+| | |
+|---|---|
+| **Real terminals** | Full emulation — colors, mouse, `vim`, `htop`, fancy keybindings. Not a chat box. |
+| **Live AI status** | Sidebar shows when each terminal is working, waiting for input, or done — at a glance. |
+| **Git at a glance** | Current branch and directory cleanliness shown inline on every terminal row. |
 
-### Edge reveal
+### 🎛️ Interface
 
-A slim ribbon hugs the right edge of the display. Push the cursor against it and the drawer opens. Pick the look that suits you: a **solid** bar, an animated **smoke** effect, an **invisible** hover zone, or **none** at all if you'd rather only use the shortcut.
+| | |
+|---|---|
+| **Slide-out drawer** | Tucks off the right screen edge. Glides in on demand, disappears on click-outside. No dock icon, no main window. |
+| **Edge reveal** | Hover the screen edge to open. Style options: **solid** bar, animated **smoke**, **invisible** zone, or **none** (shortcut only). |
+| **Custom shortcut** | Default `Cmd+Control+O`. Bind it to whatever fits your muscle memory. |
 
-### Real terminals
+### 🗂️ Organization
 
-Every terminal is the real thing, not a chat box. Colors, mouse support, fancy keybindings, fullscreen apps like `vim` or `htop` — all of it works the way you'd expect.
+| | |
+|---|---|
+| **Terminal groups** | Named folders tied to a project directory. Each holds multiple terminals; state persists as you switch. |
+| **Per-group setup** | Custom name, working directory, and auto-run command per group — kick off `claude` or a dev server automatically. |
+| **Multi-screen** | Choose which display the drawer opens on. Width preference is remembered per screen. |
 
-### Terminal groups
+### ⚙️ Configuration
 
-Organize work into named folders tied to a project directory. Each group holds several terminals, and every terminal keeps its state as you jump between them.
-
-### Per-group setup
-
-Give each group its own name, working directory, and an initial command that runs automatically when you spin up a new terminal in it — perfect for kicking off `claude`, `opencode`, or a dev server without retyping.
-
-### Live status on every terminal
-
-When an AI coding terminal is busy, waiting for your input, or finished, the row in the sidebar reflects it. You can see at a glance which terminal needs you without opening each one.
-
-### Git at a glance
-
-Each terminal row shows the current branch and whether the working directory is clean, so you always know where you stand before running a command.
-
-### Multi-screen friendly
-
-Pick which display the drawer opens on, and Ocak remembers how wide you like it on each one. Moving between an external monitor and a laptop screen doesn't squash the layout.
-
-### Theming
-
-Independent controls for the app's appearance and the terminal's colors. Separate light and dark palettes, with an app icon that follows your system mode.
-
-### Your shortcut, your rules
-
-Default is `Cmd+Control+O`, but you can bind it to whatever combination fits your muscle memory.
-
-### One-click setup
-
-Turn on status tracking from the settings pane with a single click. No config files to hand-edit.
-
-### Auto start at login
-
-Flip a switch in settings and Ocak launches itself when you log in, ready in the menu bar before you need it.
+| | |
+|---|---|
+| **Theming** | Separate controls for app and terminal colors. Light and dark palettes, app icon follows system mode. |
+| **One-click setup** | Enable AI status tracking from the settings pane with a single click. No config files to edit. |
+| **Auto start** | Toggle launch-at-login in settings. Ocak is ready in the menu bar before you need it. |
+| **Auto update** | Ocak checks for new releases on launch and updates itself in the background. Always on the latest version without manual downloads. |
 
 ## Build from source
 

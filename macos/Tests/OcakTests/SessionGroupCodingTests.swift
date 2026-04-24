@@ -53,10 +53,11 @@ struct SessionGroupCodingTests {
           "order": 0,
           "createdAt": 760000000
         }
-        """.data(using: .utf8)!
+        """
+        let legacyData = Data(legacyJSON.utf8)
 
         let decoder = JSONDecoder()
-        let group = try decoder.decode(SessionGroup.self, from: legacyJSON)
+        let group = try decoder.decode(SessionGroup.self, from: legacyData)
 
         #expect(group.name == "Legacy Group")
         #expect(group.isCollapsed == false)

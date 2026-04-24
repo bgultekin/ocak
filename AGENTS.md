@@ -52,7 +52,7 @@ Requires macOS 14+ and Swift 5.9+. Dependencies (SwiftTerm, KeyboardShortcuts) r
 - **HookServer** — TCP server on port 27832 that receives HTTP POST from Claude Code hooks. Parses JSON body into `HookEvent` and dispatches to `SessionStore`.
 - **HookEvent** — decoded hook payload. The `ocakSessionId` field is injected by the hook command from the `$OCAK_SESSION_ID` env var set by TerminalManager.
 - **HookInstaller** — installs/uninstalls Ocak's hooks into `~/.claude/settings.json` via read-backup-merge-write. Idempotent — checks for existing OCAK_SESSION_ID markers.
-- **Plugin marketplace** — hooks are bundled as a Claude Code plugin in `Resources/claude-ocak-marketplace/`. `PluginStatusChecker` (in Helpers/) detects install status by reading `~/.claude/plugins/installed_plugins.json`, with fallback to legacy settings.json check.
+- **Plugin marketplace** — hooks are bundled as a Claude Code plugin in `Resources/claude-ocak-marketplace/`. `PluginStatusChecker` (in Helpers/) detects install status by reading `~/.claude/plugins/installed_plugins.json`, with fallback to legacy settings.json check. The plugin version is declared in `macos/Sources/Ocak/Resources/claude-ocak-marketplace/plugins/ocak/.claude-plugin/plugin.json`. **Whenever any file under `Resources/claude-ocak-marketplace/` is modified, the `version` field in `plugin.json` must be incremented (patch bump by default, minor bump for new hooks or structural changes) before committing.**
 
 ### Services (macos/Sources/Ocak/Services/)
 - **ProcessWatcher** — polls process table every 2s via sysctl to detect if claude is running as a child of each session's shell PID. Updates `isClaudeRunning` on sessions.
