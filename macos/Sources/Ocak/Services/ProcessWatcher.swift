@@ -4,6 +4,7 @@ import Darwin
 /// Polls the process table every 2 seconds and updates each session's isAgentRunning flag.
 /// Owns a repeating Timer on the main run loop — the intentional exception to the no-polling rule,
 /// since no AI agent hook exists for shell/agent process transitions (D-08).
+@MainActor
 final class ProcessWatcher {
     private weak var store: SessionStore?
     private var timer: Timer?
@@ -14,7 +15,7 @@ final class ProcessWatcher {
 
     func start() {
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            self?.tick()
+            MainActor.assumeIsolated { self?.tick() }
         }
     }
 

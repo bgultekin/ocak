@@ -4,6 +4,7 @@ import Foundation
 import Observation
 
 /// Owns all terminal views and their processes. Views persist across session switches.
+@MainActor
 final class TerminalManager {
     static let shared = TerminalManager()
 
@@ -203,7 +204,7 @@ final class TerminalManager {
 
     /// Builds a PATH suitable for GUI-launched shells, which start with launchd's minimal PATH.
     /// Runs /usr/libexec/path_helper (same as a login shell) and prepends common user bin dirs.
-    private static func expandedPath(current: String?) -> String {
+    nonisolated private static func expandedPath(current: String?) -> String {
         // Run path_helper to get the system-expanded PATH (Homebrew, /usr/local/bin, etc.)
         var systemPath = current ?? "/usr/bin:/bin:/usr/sbin:/sbin"
         let task = Process()

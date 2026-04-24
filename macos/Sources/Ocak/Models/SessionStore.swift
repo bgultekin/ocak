@@ -101,7 +101,7 @@ final class SessionStore {
         }
     }
 
-    func removeGroup(_ id: UUID) {
+    @MainActor func removeGroup(_ id: UUID) {
         sessions.filter { $0.groupID == id }.map(\.id).forEach { removeSession($0) }
         groups.removeAll { $0.id == id }
         save()
@@ -205,7 +205,7 @@ final class SessionStore {
         }
     }
 
-    func removeSession(_ id: UUID) {
+    @MainActor func removeSession(_ id: UUID) {
         TerminalManager.shared.removeTerminal(for: id)
         let idx = sessions.firstIndex(where: { $0.id == id })
         sessions.removeAll { $0.id == id }
@@ -323,7 +323,7 @@ final class SessionStore {
     }
 
     /// Process an incoming AI agent hook event and update the corresponding session's status.
-    func processHookEvent(_ event: HookEvent) {
+    @MainActor func processHookEvent(_ event: HookEvent) {
 
         guard let idx = findSessionIndex(for: event) else { return }
 
