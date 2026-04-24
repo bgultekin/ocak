@@ -79,12 +79,6 @@ final class TerminalManager {
         }
     }
 
-    func redrawAllTerminals() {
-        for (_, termView) in terminals {
-            termView.setNeedsDisplay(termView.bounds)
-        }
-    }
-
     /// Update appearance for all terminals (e.g., when theme changes).
     func updateAllTerminalsAppearance() {
         for (_, termView) in terminals {
