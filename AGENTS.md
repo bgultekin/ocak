@@ -95,3 +95,4 @@ Session status updates come from two sources:
 ## Pull Requests
 
 - While creating pull requests always create draft PRs.
+- Before pushing run `make build` and make sure there are no build/linter issues

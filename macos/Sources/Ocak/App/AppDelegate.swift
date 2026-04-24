@@ -55,6 +55,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             print("[Ocak] Plugin update check failed: \(error)")
         }
 
+        do {
+            let updated = try HookInstaller.updateOpenCodePluginIfNeeded()
+            if updated { print("[Ocak] Updated OpenCode plugin to newer version") }
+        } catch {
+            print("[Ocak] OpenCode plugin update check failed: \(error)")
+        }
+
         KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
             self?.toggleDrawer()
         }

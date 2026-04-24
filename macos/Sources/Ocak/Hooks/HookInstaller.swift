@@ -108,6 +108,26 @@ enum HookInstaller {
         try pluginData.write(to: URL(fileURLWithPath: openCodePluginPath), options: .atomic)
     }
 
+    /// Updates the installed OpenCode plugin if a newer version is bundled in the app.
+    /// Returns true if an update was performed, false if no update was needed.
+    @discardableResult
+    static func updateOpenCodePluginIfNeeded() throws -> Bool {
+        guard isOpenCodeHooksInstalled() else { return false }
+
+        let bundledVersion = try PluginVersionManager.readBundledOpenCodeVersion()
+        let installedVersion = PluginVersionManager.readInstalledOpenCodeVersion()
+
+        guard let bundled = bundledVersion else { return false }
+
+        if let installed = installedVersion,
+           !PluginVersionManager.isVersionGreater(bundled, than: installed) {
+            return false
+        }
+
+        try installOpenCodeHooks()
+        return true
+    }
+
     /// Removes the OpenCode plugin file.
     static func uninstallOpenCodeHooks() throws {
         if FileManager.default.fileExists(atPath: openCodePluginPath) {
