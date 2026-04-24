@@ -91,3 +91,7 @@ Session status updates come from two sources:
 - No sycophantic openers or closing fluff.
 - Keep solutions simple and direct.
 - User instructions always override this file.
+
+## Pull Requests
+
+- While creating pull requests always create draft PRs.

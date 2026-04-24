@@ -4,6 +4,7 @@ import Foundation
 import Observation
 
 /// Owns all terminal views and their processes. Views persist across session switches.
+@MainActor
 final class TerminalManager {
     static let shared = TerminalManager()
 
@@ -78,16 +79,23 @@ final class TerminalManager {
         }
     }
 
-    func redrawAllTerminals() {
-        for (_, termView) in terminals {
-            termView.setNeedsDisplay(termView.bounds)
-        }
-    }
-
     /// Update appearance for all terminals (e.g., when theme changes).
     func updateAllTerminalsAppearance() {
         for (_, termView) in terminals {
             configureAppearance(termView)
+        }
+    }
+
+    /// Force every persistent terminal view to redraw. Used after the drawer finishes
+    /// sliding in on a new panel/screen: SwiftTerm only marks itself dirty inside
+    /// `setFrameSize` / mouse events, so when the view is re-parented into a fresh
+    /// window with unchanged final bounds, the CALayer keeps its stale backing store
+    /// and the terminal renders as a solid background color (looks black) until the
+    /// user clicks. Calling this after the panel is fully on-screen guarantees a
+    /// draw pass in the new window's compositor.
+    func redrawAllTerminals() {
+        for (_, termView) in terminals {
+            termView.needsDisplay = true
         }
     }
 
@@ -190,7 +198,7 @@ final class TerminalManager {
 
     /// Builds a PATH suitable for GUI-launched shells, which start with launchd's minimal PATH.
     /// Runs /usr/libexec/path_helper (same as a login shell) and prepends common user bin dirs.
-    private static func expandedPath(current: String?) -> String {
+    nonisolated private static func expandedPath(current: String?) -> String {
         // Run path_helper to get the system-expanded PATH (Homebrew, /usr/local/bin, etc.)
         var systemPath = current ?? "/usr/bin:/bin:/usr/sbin:/sbin"
         let task = Process()
