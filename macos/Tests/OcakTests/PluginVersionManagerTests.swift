@@ -24,6 +24,16 @@ private enum PluginVersionManager {
         return parts1[2] > parts2[2]
     }
 
+    static func extractVersionFromJS(_ content: String) -> String? {
+        for line in content.split(separator: "\n", omittingEmptySubsequences: false) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("// version:") {
+                return trimmed.dropFirst("// version:".count).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return nil
+    }
+
     static func readBundledPluginVersion(pluginJSONPath: String) throws -> String? {
         let data = try Data(contentsOf: URL(fileURLWithPath: pluginJSONPath))
         return try extractVersion(from: data)
@@ -182,5 +192,39 @@ struct PluginVersionManagerTests {
         let nonexistentPath = "/tmp/nonexistent-\(UUID().uuidString)/installed_plugins.json"
         let version = try PluginVersionManager.readInstalledPluginVersion(installedPluginsPath: nonexistentPath)
         #expect(version == nil)
+    }
+
+    // MARK: - extractVersionFromJS
+
+    @Test("Extracts version from JS comment")
+    func extractsVersionFromJS() {
+        let js = """
+        // Ocak plugin for OpenCode
+        // version: 1.2.3
+        const x = 1
+        """
+        #expect(PluginVersionManager.extractVersionFromJS(js) == "1.2.3")
+    }
+
+    @Test("Returns nil when no version comment in JS")
+    func returnsNilWhenNoVersionComment() {
+        let js = "// no version here\nconst x = 1"
+        #expect(PluginVersionManager.extractVersionFromJS(js) == nil)
+    }
+
+    @Test("Extracts version from bundled plugin.js")
+    func extractsVersionFromBundledPluginJS() throws {
+        let thisFile = URL(fileURLWithPath: #filePath)
+        let packageRoot = thisFile
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let pluginJSPath = packageRoot
+            .appendingPathComponent("Sources/Ocak/Resources/opencode-ocak/plugin.js")
+            .path
+        let content = try String(contentsOfFile: pluginJSPath, encoding: .utf8)
+        let version = PluginVersionManager.extractVersionFromJS(content)
+        #expect(version != nil)
+        #expect(version != "")
     }
 }

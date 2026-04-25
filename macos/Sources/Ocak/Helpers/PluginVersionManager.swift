@@ -42,6 +42,45 @@ enum PluginVersionManager {
         return try extractVersion(from: data)
     }
 
+    /// Extracts the version from a JS plugin file by scanning for a `// version: x.y.z` comment.
+    static func extractVersionFromJS(_ content: String) -> String? {
+        for line in content.split(separator: "\n", omittingEmptySubsequences: false) {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("// version:") {
+                return trimmed.dropFirst("// version:".count).trimmingCharacters(in: .whitespaces)
+            }
+        }
+        return nil
+    }
+
+    /// Reads the version from the bundled OpenCode plugin.js in app resources.
+    static func readBundledOpenCodeVersion(pluginJSPath: String? = nil) throws -> String? {
+        let url: URL
+        if let path = pluginJSPath {
+            url = URL(fileURLWithPath: path)
+        } else {
+            guard let pluginURL = Bundle.module.resourceURL?
+                .appendingPathComponent("opencode-ocak/plugin.js"),
+                  FileManager.default.fileExists(atPath: pluginURL.path) else {
+                throw VersionError.readFailed
+            }
+            url = pluginURL
+        }
+        let content = try String(contentsOf: url, encoding: .utf8)
+        return extractVersionFromJS(content)
+    }
+
+    /// Reads the version from the installed OpenCode plugin at ~/.config/opencode/plugins/ocak.js.
+    static func readInstalledOpenCodeVersion(installedPluginPath: String? = nil) -> String? {
+        let path = installedPluginPath ?? FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/opencode/plugins/ocak.js").path
+        guard FileManager.default.fileExists(atPath: path),
+              let content = try? String(contentsOfFile: path, encoding: .utf8) else {
+            return nil
+        }
+        return extractVersionFromJS(content)
+    }
+
     /// Reads the version of the installed ocak plugin from installed_plugins.json.
     /// Returns nil if plugin not found or file doesn't exist.
     static func readInstalledPluginVersion(installedPluginsPath: String? = nil) throws -> String? {
