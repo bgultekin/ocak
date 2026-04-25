@@ -7,12 +7,15 @@
 
 # Ocak
 
+<sub><i>/oˈdʒak/ — Turkish for "Hearth", "Stove", or "Fireplace"</i></sub>
+
 **A slide-out terminal drawer for managing AI coding terminals on macOS.**
 
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-blue)
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-early-yellow)
+
 
 </div>
 
