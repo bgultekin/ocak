@@ -57,7 +57,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         do {
             let updated = try HookInstaller.updateOpenCodePluginIfNeeded()
-            if updated { print("[Ocak] Updated OpenCode plugin to newer version") }
+            if updated {
+                print("[Ocak] Updated OpenCode plugin to newer version")
+                updateService.recordPluginUpdate()
+            }
         } catch {
             print("[Ocak] OpenCode plugin update check failed: \(error)")
         }
