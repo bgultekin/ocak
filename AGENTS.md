@@ -39,7 +39,7 @@ Requires macOS 14+ and Swift 5.9+. Dependencies (SwiftTerm, KeyboardShortcuts) r
 - **DrawerPanel** — slide-in/out panel anchored to the right screen edge. Uses CALayer mask animations (not frame-based) to avoid bleeding onto adjacent displays. Dismisses on click-outside.
 
 ### Session Model (macos/Sources/Ocak/Models/)
-- **SessionGroup** — named folder of sessions with a shared working directory.
+- **SessionGroup** — named folder of sessions with a shared working directory. Fields: `name`, `directory`, `initialCommand`, `isCollapsed`, `openInVSCode`. All optional fields use `decodeIfPresent` for backward compatibility.
 - **ThreadSession** — individual terminal session with status tracking. `isClaudeRunning` is runtime-only (excluded from CodingKeys).
 - **SessionStore** — `@Observable` central store. Persists sessions/groups to UserDefaults. Handles legacy migration from pre-group format. Processes hook events to update session status.
 - **PanelSizeStore** — per-screen panel width persistence (collapsed vs expanded).
@@ -70,6 +70,14 @@ Session status updates come from two sources:
 ### Configuration Stores
 - **ScreenConfigStore** — per-screen settings (e.g., which screen the drawer appears on).
 - **RibbonConfigStore** — ribbon appearance/behavior settings.
+
+### Group Header Actions
+Each group's header row can show up to three action buttons (visible when not editing settings):
+- **Gear** — opens the inline settings form (name, directory, initial command, VS Code toggle).
+- **VS Code** (`chevron.left.forwardslash.chevron.right`) — opens the group's configured directory in VS Code via `NSWorkspace` bundle ID `com.microsoft.VSCode`. Only shown when `openInVSCode` is `true` **and** a non-empty directory is set on the group.
+- **Plus** — adds a new terminal to the group.
+
+The VS Code button also appears in the collapsed header state (next to the terminal count), so it is always reachable without expanding the group.
 
 ### UI Terminology
 - Use **"terminal"** (not "session") in all user-facing UI text. Internal code/models use `session`/`SessionStore` etc., but labels, counts, and copy shown to the user say "terminal"/"terminals".
