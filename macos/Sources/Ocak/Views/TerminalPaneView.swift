@@ -140,8 +140,8 @@ private struct CloseButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "xmark")
-                .font(.system(size: 10, weight: .medium))
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .medium))
                 .foregroundColor(OcakTheme.sectionLabel)
                 .frame(width: 24, height: 24)
                 .background(isHovered ? OcakTheme.buttonHoverBackground : Color.clear)
