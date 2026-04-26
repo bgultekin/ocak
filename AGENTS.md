@@ -32,7 +32,7 @@ Requires macOS 14+ and Swift 5.9+. Dependencies (SwiftTerm, KeyboardShortcuts) r
 
 ### App Lifecycle
 - **No visible main window.** `OcakApp` uses `NSApplicationDelegateAdaptor` with `.accessory` activation policy. All UI is managed by `AppDelegate` through custom `NSPanel` subclasses.
-- **AppDelegate** orchestrates everything: ribbon panel, drawer panel, edge detection (hover-to-reveal), status bar menu, keyboard shortcut (Cmd+Control+O), hook server, and process watcher.
+- **AppDelegate** orchestrates everything: ribbon panel, drawer panel, edge detection (hover-to-reveal), status bar menu, hotkey handling (combination or double-tap), hook server, and process watcher.
 
 ### Panel System (macos/Sources/Ocak/Panels/)
 - **FloatingPanel** — always-visible, non-activating overlay used for the edge ribbon.
@@ -43,6 +43,7 @@ Requires macOS 14+ and Swift 5.9+. Dependencies (SwiftTerm, KeyboardShortcuts) r
 - **ThreadSession** — individual terminal session with status tracking. `isClaudeRunning` is runtime-only (excluded from CodingKeys).
 - **SessionStore** — `@Observable` central store. Persists sessions/groups to UserDefaults. Handles legacy migration from pre-group format. Processes hook events to update session status.
 - **PanelSizeStore** — per-screen panel width persistence (collapsed vs expanded).
+- **HotkeyConfigStore** — `@Observable` singleton. Persists hotkey mode (`combination` or `doubleTap`), double-tap modifier key, and double-tap threshold (ms) to UserDefaults. `AppDelegate` observes this store and calls `applyHotkeyMode(_:)` whenever it changes.
 
 ### Terminal (macos/Sources/Ocak/Terminal/)
 - **TerminalManager** — singleton that owns all `OcakTerminalView` instances keyed by session UUID. Terminals persist across session switches. Injects shell hooks for CWD tracking (OSC 7) and kitty keyboard reset on precmd.
@@ -58,6 +59,7 @@ Requires macOS 14+ and Swift 5.9+. Dependencies (SwiftTerm, KeyboardShortcuts) r
 - **ProcessWatcher** — polls process table every 2s via sysctl to detect if claude is running as a child of each session's shell PID. Updates `isClaudeRunning` on sessions.
 - **ProcessDetector** — low-level sysctl wrapper for batch process detection.
 - **GitInfoReader** — reads git branch and worktree status from a working directory for display in the UI.
+- **DoubleTapDetector** — installs a CGEvent tap (on a dedicated thread) that listens for `flagsChanged` events and fires `onDoubleTap` when the configured modifier key is pressed twice within the threshold window. Started/stopped by `AppDelegate` when the hotkey mode switches to/from `.doubleTap`. Thread-safe via `NSLock`.
 
 ### Status Flow
 Session status updates come from two sources:
@@ -70,6 +72,7 @@ Session status updates come from two sources:
 ### Configuration Stores
 - **ScreenConfigStore** — per-screen settings (e.g., which screen the drawer appears on).
 - **RibbonConfigStore** — ribbon appearance/behavior settings.
+- **HotkeyConfigStore** — hotkey mode and double-tap parameters (see Session Model above).
 
 ### Group Header Actions
 Each group's header row can show up to three action buttons (visible when not editing settings):

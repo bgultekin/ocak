@@ -68,7 +68,7 @@ https://github.com/user-attachments/assets/da23a5cf-93c2-4eb4-8a13-8495b46a1f4e
 |---|---|
 | **Slide-out drawer** | Tucks off the right screen edge. Glides in on demand, disappears on click-outside. No dock icon, no main window. |
 | **Edge reveal** | Hover the screen edge to open. Style options: **solid** bar, animated **smoke**, **invisible** zone, or **none** (shortcut only). |
-| **Custom shortcut** | Default `Cmd+Control+O`. Bind it to whatever fits your muscle memory. |
+| **Hotkey modes** | Two ways to open the drawer: a **key combination** (default `Cmd+Control+O`, fully rebindable) or a **double-tap modifier** — tap `⌘`, `⌥`, `⌃`, or `⇧` twice in quick succession. Switch modes and tune the double-tap window in Settings. |
 
 ### 🗂️ Organization
 
