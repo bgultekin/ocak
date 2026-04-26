@@ -30,6 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let screenConfig = ScreenConfigStore.shared
     private var screenForDrawer: NSScreen?
     private let panelSizeStore = PanelSizeStore.shared
+    private let hotkeyConfig = HotkeyConfigStore.shared
+    private var doubleTapDetector: DoubleTapDetector?
 
     private static let smokeRibbonWidthFactor: CGFloat = 0.06
 
@@ -65,9 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             print("[Ocak] OpenCode plugin update check failed: \(error)")
         }
 
-        KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
-            self?.toggleDrawer()
-        }
+        setupHotkey()
 
         NotificationCenter.default.addObserver(
             self,
@@ -119,6 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         processWatcher?.stop()
         hookServer?.stop()
         TerminalManager.shared.flushAllHistoryLogs()
+        doubleTapDetector?.stop()
         store.save()
         screenForDrawer.flatMap { panelSizeStore.save(for: $0) }
         removeEdgeMonitors()
@@ -483,5 +484,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let watcher = ProcessWatcher(store: store)
         watcher.start()
         processWatcher = watcher
+    }
+
+    // MARK: - Hotkey
+
+    private func setupHotkey() {
+        applyHotkeyMode(hotkeyConfig.mode)
+        observeHotkeyConfig()
+    }
+
+    private func observeHotkeyConfig() {
+        withObservationTracking {
+            _ = hotkeyConfig.mode
+            _ = hotkeyConfig.doubleTapModifier
+            _ = hotkeyConfig.doubleTapThresholdMs
+        } onChange: { [weak self] in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.applyHotkeyMode(self.hotkeyConfig.mode)
+                self.observeHotkeyConfig()
+            }
+        }
+    }
+
+    private func applyHotkeyMode(_ mode: HotkeyMode) {
+        doubleTapDetector?.stop()
+        doubleTapDetector = nil
+
+        switch mode {
+        case .combination:
+            KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
+                self?.toggleDrawer()
+            }
+        case .doubleTap:
+            KeyboardShortcuts.onKeyUp(for: .togglePanel) { }
+            let detector = DoubleTapDetector(
+                modifier: hotkeyConfig.doubleTapModifier,
+                thresholdMs: hotkeyConfig.doubleTapThresholdMs
+            )
+            detector.onDoubleTap = { [weak self] in self?.toggleDrawer() }
+            detector.start()
+            doubleTapDetector = detector
+        }
     }
 }
