@@ -517,7 +517,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 self?.toggleDrawer()
             }
         case .doubleTap:
-            KeyboardShortcuts.removeHandler(for: .togglePanel)
+            KeyboardShortcuts.onKeyUp(for: .togglePanel) {}
             let detector = DoubleTapDetector(
                 modifier: hotkeyConfig.doubleTapModifier,
                 thresholdMs: hotkeyConfig.doubleTapThresholdMs
