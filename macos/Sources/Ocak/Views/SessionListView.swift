@@ -733,7 +733,7 @@ struct SessionGroupListView: View {
                 Button("Save") {
                     let dir = editDirectory.trimmingCharacters(in: .whitespaces)
                     let cmd = editInitialCommand.trimmingCharacters(in: .whitespaces)
-                    onSaveGroupSettings(editName, dir.isEmpty ? nil : dir, cmd.isEmpty ? nil : cmd, editOpenInVSCode)
+                    onSaveGroupSettings(editName, dir.isEmpty ? nil : dir, cmd.isEmpty ? nil : cmd, editOpenInVSCode && VSCodeLauncher.isInstalled)
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isEditingSettings = false
                     }
