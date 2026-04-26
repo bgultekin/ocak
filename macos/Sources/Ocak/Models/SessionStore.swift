@@ -93,6 +93,13 @@ final class SessionStore {
         }
     }
 
+    func updateGroupOpenInVSCode(_ id: UUID, openInVSCode: Bool) {
+        if let idx = groups.firstIndex(where: { $0.id == id }) {
+            groups[idx].openInVSCode = openInVSCode
+            save()
+        }
+    }
+
     func setGroupCollapsed(_ id: UUID, collapsed: Bool) {
         if let idx = groups.firstIndex(where: { $0.id == id }) {
             guard groups[idx].isCollapsed != collapsed else { return }

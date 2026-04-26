@@ -76,6 +76,7 @@ https://github.com/user-attachments/assets/da23a5cf-93c2-4eb4-8a13-8495b46a1f4e
 |---|---|
 | **Terminal groups** | Named folders tied to a project directory. Each holds multiple terminals; state persists as you switch. |
 | **Per-group setup** | Custom name, working directory, and auto-run command per group — kick off `claude` or a dev server automatically. |
+| **Open in VS Code** | Optional per-group button to open the group's folder in VS Code with one click. Enable it in group settings. |
 | **Multi-screen** | Choose which display the drawer opens on. Width preference is remembered per screen. |
 
 ### ⚙️ Configuration

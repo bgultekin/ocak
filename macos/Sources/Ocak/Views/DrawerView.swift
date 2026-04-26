@@ -75,6 +75,12 @@ struct DrawerView: View {
                     groupName: store.activeSession.flatMap { session in
                         store.groups.first { $0.id == session.groupID }?.name
                     },
+                    groupDirectory: store.activeSession.flatMap { session in
+                        store.groups.first { $0.id == session.groupID }?.directory
+                    },
+                    groupOpenInVSCode: store.activeSession.flatMap { session in
+                        store.groups.first { $0.id == session.groupID }
+                    }?.openInVSCode ?? false,
                     initialCommand: store.activeSession.flatMap { session in
                         store.groups.first { $0.id == session.groupID }?.initialCommand
                     },
