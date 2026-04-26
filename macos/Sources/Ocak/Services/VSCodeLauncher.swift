@@ -2,6 +2,10 @@ import AppKit
 import Foundation
 
 enum VSCodeLauncher {
+    static var isInstalled: Bool {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.microsoft.VSCode") != nil
+    }
+
     static func open(directory: String) {
         guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.microsoft.VSCode") else { return }
         let expanded = (directory as NSString).expandingTildeInPath
