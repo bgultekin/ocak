@@ -467,13 +467,7 @@ struct SessionGroupListView: View {
     }
 
     private func openInVSCode(directory: String) {
-        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.microsoft.VSCode") else { return }
-        let config = NSWorkspace.OpenConfiguration()
-        NSWorkspace.shared.open(
-            [URL(fileURLWithPath: directory)],
-            withApplicationAt: appURL,
-            configuration: config
-        )
+        VSCodeLauncher.open(directory: directory)
     }
 
     private var newSessionButton: some View {
