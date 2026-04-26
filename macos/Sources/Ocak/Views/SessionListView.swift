@@ -256,6 +256,35 @@ struct GroupDropTargetDelegate: DropDelegate {
     }
 }
 
+private final class GroupMenuHandler: NSObject {
+    private var onSettings: (() -> Void)?
+    private var onDelete: (() -> Void)?
+
+    func popUp(onSettings: @escaping () -> Void, onDelete: @escaping () -> Void) {
+        self.onSettings = onSettings
+        self.onDelete = onDelete
+
+        let menu = NSMenu()
+
+        let settingsItem = NSMenuItem(title: "Settings", action: #selector(handleSettings), keyEquivalent: "")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        menu.addItem(.separator())
+
+        let deleteItem = NSMenuItem(title: "Delete", action: #selector(handleDelete), keyEquivalent: "")
+        deleteItem.target = self
+        menu.addItem(deleteItem)
+
+        guard let event = NSApp.currentEvent,
+              let view = event.window?.contentView ?? NSApp.keyWindow?.contentView else { return }
+        NSMenu.popUpContextMenu(menu, with: event, for: view)
+    }
+
+    @objc private func handleSettings() { onSettings?() }
+    @objc private func handleDelete() { onDelete?() }
+}
+
 /// Directory group shown as a card with project name header.
 struct SessionGroupListView: View {
     let group: SessionGroup
@@ -279,7 +308,6 @@ struct SessionGroupListView: View {
     @State private var editInitialCommand = ""
     @State private var editOpenInVSCode = false
     @State private var showingDeleteConfirmation = false
-    @State private var isSettingsHovered = false
     @State private var isVSCodeHovered = false
     @State private var isNewSessionHovered = false
 
@@ -287,6 +315,7 @@ struct SessionGroupListView: View {
     @State private var isRenamingGroup = false
     @State private var draftGroupName = ""
     @State private var outsideClickMonitor: Any?
+    @State private var groupMenuHandler = GroupMenuHandler()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -340,10 +369,14 @@ struct SessionGroupListView: View {
                     .tracking(1.2)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startGroupRename() }
+                    .contextMenu { groupContextMenuItems }
                 if group.isCollapsed, let dotColor = groupStatusDotColor {
                     Circle()
                         .fill(dotColor)
                         .frame(width: 6, height: 6)
+                }
+                if !isEditingSettings {
+                    ellipsisMenu
                 }
             }
 
@@ -355,7 +388,6 @@ struct SessionGroupListView: View {
                 }
                 collapsedTrailing
             } else if !isEditingSettings {
-                settingsButton
                 if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
                     vsCodeButton(directory: dir)
                 }
@@ -417,8 +449,8 @@ struct SessionGroupListView: View {
         }
     }
 
-    private var settingsButton: some View {
-        Button {
+    @ViewBuilder private var groupContextMenuItems: some View {
+        Button("Settings") {
             editName = group.name
             editDirectory = group.directory ?? ""
             editInitialCommand = group.initialCommand ?? ""
@@ -427,22 +459,46 @@ struct SessionGroupListView: View {
                 store.setGroupCollapsed(group.id, collapsed: false)
                 isEditingSettings = true
             }
-        } label: {
-            Image(systemName: "gear")
-                .font(.system(size: 16))
-                .foregroundColor(groupTitleColor)
-                .frame(width: 24, height: 24)
-                .background(isSettingsHovered ? OcakTheme.buttonHoverBackground : Color.clear)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .contentShape(RoundedRectangle(cornerRadius: 6))
         }
-        .buttonStyle(.plain)
-        .help("Group settings")
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) {
-                isSettingsHovered = hovering
+        Divider()
+        Button("Delete", role: .destructive) {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                store.setGroupCollapsed(group.id, collapsed: false)
+                isEditingSettings = true
+                showingDeleteConfirmation = true
             }
         }
+    }
+
+    private var ellipsisMenu: some View {
+        Button {
+            groupMenuHandler.popUp(
+                onSettings: {
+                    editName = group.name
+                    editDirectory = group.directory ?? ""
+                    editInitialCommand = group.initialCommand ?? ""
+                    editOpenInVSCode = group.openInVSCode
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        store.setGroupCollapsed(group.id, collapsed: false)
+                        isEditingSettings = true
+                    }
+                },
+                onDelete: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        store.setGroupCollapsed(group.id, collapsed: false)
+                        isEditingSettings = true
+                        showingDeleteConfirmation = true
+                    }
+                }
+            )
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(OcakTheme.sectionLabel)
+                .frame(width: 20, height: 20)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func vsCodeButton(directory: String) -> some View {
@@ -650,21 +706,21 @@ struct SessionGroupListView: View {
             Spacer()
                 .frame(height: 12)
 
-            Toggle(isOn: $editOpenInVSCode) {
-                Text("SHOW VS CODE BUTTON")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(OcakTheme.sectionLabel)
-                    .kerning(0.8)
-            }
-            .toggleStyle(.switch)
-            .controlSize(.mini)
+            if VSCodeLauncher.isInstalled {
+                Toggle(isOn: $editOpenInVSCode) {
+                    Text("SHOW VS CODE BUTTON")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(OcakTheme.sectionLabel)
+                        .kerning(0.8)
+                }
+                .toggleStyle(.switch)
+                .controlSize(.mini)
 
-            Spacer()
-                .frame(height: 12)
+                Spacer()
+                    .frame(height: 12)
+            }
 
             HStack {
-                deleteButton
-
                 Spacer()
                 Button("Cancel") {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -677,7 +733,7 @@ struct SessionGroupListView: View {
                 Button("Save") {
                     let dir = editDirectory.trimmingCharacters(in: .whitespaces)
                     let cmd = editInitialCommand.trimmingCharacters(in: .whitespaces)
-                    onSaveGroupSettings(editName, dir.isEmpty ? nil : dir, cmd.isEmpty ? nil : cmd, editOpenInVSCode)
+                    onSaveGroupSettings(editName, dir.isEmpty ? nil : dir, cmd.isEmpty ? nil : cmd, editOpenInVSCode && VSCodeLauncher.isInstalled)
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isEditingSettings = false
                     }
@@ -688,17 +744,6 @@ struct SessionGroupListView: View {
             }
             .padding(.top, 20)
         }
-    }
-
-    private var deleteButton: some View {
-        Button("Delete Group") {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                showingDeleteConfirmation = true
-            }
-        }
-        .font(.system(size: 11))
-        .buttonStyle(.borderedProminent)
-        .tint(.red)
     }
 
     private var deleteConfirmationView: some View {
@@ -715,6 +760,7 @@ struct SessionGroupListView: View {
             HStack {
                 Button("Cancel") {
                     withAnimation(.easeInOut(duration: 0.2)) {
+                        isEditingSettings = false
                         showingDeleteConfirmation = false
                     }
                 }
