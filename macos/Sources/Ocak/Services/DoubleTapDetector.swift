@@ -111,8 +111,9 @@ final class DoubleTapDetector {
     private func reenableTap() {
         stateLock.lock()
         let tap = eventTap
+        let stopped = isStopped
         stateLock.unlock()
-        if let tap {
+        if let tap, !stopped {
             CGEvent.tapEnable(tap: tap, enable: true)
         }
     }
