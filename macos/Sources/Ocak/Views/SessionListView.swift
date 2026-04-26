@@ -277,7 +277,7 @@ private final class GroupMenuHandler: NSObject {
         menu.addItem(deleteItem)
 
         guard let event = NSApp.currentEvent,
-              let view = NSApp.keyWindow?.contentView else { return }
+              let view = event.window?.contentView ?? NSApp.keyWindow?.contentView else { return }
         NSMenu.popUpContextMenu(menu, with: event, for: view)
     }
 
