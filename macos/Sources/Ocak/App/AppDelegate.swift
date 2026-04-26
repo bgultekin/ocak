@@ -510,6 +510,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func applyHotkeyMode(_ mode: HotkeyMode) {
         doubleTapDetector?.stop()
         doubleTapDetector = nil
+        KeyboardShortcuts.removeHandler(for: .togglePanel)
 
         switch mode {
         case .combination:
@@ -517,7 +518,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 self?.toggleDrawer()
             }
         case .doubleTap:
-            KeyboardShortcuts.onKeyUp(for: .togglePanel) {}
             let detector = DoubleTapDetector(
                 modifier: hotkeyConfig.doubleTapModifier,
                 thresholdMs: hotkeyConfig.doubleTapThresholdMs
