@@ -10,6 +10,8 @@ final class DoubleTapDetector {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var tapRunLoop: CFRunLoop?
+    private var retainedSelfPtr: UnsafeMutableRawPointer?
+    private var pendingStop = false
     private var lastTapTime: Date?
     private var lastFlagsHadModifier = false
 
@@ -22,7 +24,7 @@ final class DoubleTapDetector {
         guard eventTap == nil else { return }
 
         let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
-        let selfPtr = Unmanaged.passUnretained(self).toOpaque()
+        let selfPtr = Unmanaged.passRetained(self).toOpaque()
 
         guard let tap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -38,16 +40,31 @@ final class DoubleTapDetector {
                 return Unmanaged.passUnretained(event)
             },
             userInfo: selfPtr
-        ) else { return }
+        ) else {
+            Unmanaged<DoubleTapDetector>.fromOpaque(selfPtr).release()
+            return
+        }
 
-        eventTap = tap
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+
+        stateLock.lock()
+        eventTap = tap
+        retainedSelfPtr = selfPtr
         runLoopSource = source
+        pendingStop = false
+        stateLock.unlock()
 
         let thread = Thread {
             let rl = CFRunLoopGetCurrent()!
+            self.stateLock.lock()
             self.tapRunLoop = rl
             CFRunLoopAddSource(rl, source, .commonModes)
+            if self.pendingStop {
+                CFRunLoopStop(rl)
+                self.stateLock.unlock()
+                return
+            }
+            self.stateLock.unlock()
             CFRunLoopRun()
         }
         thread.qualityOfService = QualityOfService.userInteractive
@@ -55,20 +72,31 @@ final class DoubleTapDetector {
     }
 
     func stop() {
-        if let tap = eventTap {
-            CGEvent.tapEnable(tap: tap, enable: false)
-        }
+        stateLock.lock()
+        let tap = eventTap
+        let ptr = retainedSelfPtr
         if let rl = tapRunLoop, let src = runLoopSource {
             CFRunLoopRemoveSource(rl, src, .commonModes)
             CFRunLoopStop(rl)
+            pendingStop = false
+        } else {
+            pendingStop = true
         }
         eventTap = nil
         runLoopSource = nil
         tapRunLoop = nil
-        stateLock.lock()
+        retainedSelfPtr = nil
         lastTapTime = nil
         lastFlagsHadModifier = false
         stateLock.unlock()
+
+        if let tap {
+            CGEvent.tapEnable(tap: tap, enable: false)
+            CFMachPortInvalidate(tap)
+        }
+        if let ptr {
+            Unmanaged<DoubleTapDetector>.fromOpaque(ptr).release()
+        }
     }
 
     private func handleFlagsChanged(event: CGEvent) {
