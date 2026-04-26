@@ -64,10 +64,11 @@ struct SessionListView: View {
                                 },
                                 onDelete: { store.removeSession($0) },
                                 onNewSessionInGroup: { onNewSession(item.group.id) },
-                                onSaveGroupSettings: { name, directory, initialCommand in
+                                onSaveGroupSettings: { name, directory, initialCommand, openInVSCode in
                                     store.renameGroup(item.group.id, name: name)
                                     store.updateGroupDirectory(item.group.id, directory: directory)
                                     store.updateGroupInitialCommand(item.group.id, command: initialCommand)
+                                    store.updateGroupOpenInVSCode(item.group.id, openInVSCode: openInVSCode)
                                 },
                                 isDropTarget: dropTargetGroupID == item.group.id,
                                 onSessionDroppedOnGroup: { session, sourceGroupID in
@@ -176,7 +177,7 @@ struct GroupListItem: View {
     var onRename: (UUID, String) -> Void
     var onDelete: (UUID) -> Void
     var onNewSessionInGroup: () -> Void
-    var onSaveGroupSettings: (String, String?, String?) -> Void
+    var onSaveGroupSettings: (String, String?, String?, Bool) -> Void
     let isDropTarget: Bool
     var onSessionDroppedOnGroup: (ThreadSession, UUID) -> Void
     @Binding var draggedSession: ThreadSession?
@@ -264,7 +265,7 @@ struct SessionGroupListView: View {
     var onRename: (UUID, String) -> Void
     var onDelete: (UUID) -> Void
     var onNewSessionInGroup: () -> Void
-    var onSaveGroupSettings: (String, String?, String?) -> Void
+    var onSaveGroupSettings: (String, String?, String?, Bool) -> Void
     let groupIndex: Int
     let isDropTarget: Bool
     var onSessionDroppedOnGroup: (ThreadSession, UUID) -> Void
@@ -276,8 +277,10 @@ struct SessionGroupListView: View {
     @State private var editName = ""
     @State private var editDirectory = ""
     @State private var editInitialCommand = ""
+    @State private var editOpenInVSCode = false
     @State private var showingDeleteConfirmation = false
     @State private var isSettingsHovered = false
+    @State private var isVSCodeHovered = false
     @State private var isNewSessionHovered = false
 
     @State private var isGroupHovered = false
@@ -347,9 +350,15 @@ struct SessionGroupListView: View {
             Spacer()
 
             if group.isCollapsed && !isEditingSettings {
+                if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
+                    vsCodeButton(directory: dir)
+                }
                 collapsedTrailing
             } else if !isEditingSettings {
                 settingsButton
+                if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
+                    vsCodeButton(directory: dir)
+                }
                 newSessionButton
             }
         }
@@ -374,7 +383,7 @@ struct SessionGroupListView: View {
         isRenamingGroup = false
         let finalName = trimmed.isEmpty ? group.name : trimmed
         guard finalName.uppercased() != group.name.uppercased() else { return }
-        onSaveGroupSettings(finalName, group.directory, group.initialCommand)
+        onSaveGroupSettings(finalName, group.directory, group.initialCommand, group.openInVSCode)
     }
 
     private func cancelGroupRename() {
@@ -413,6 +422,7 @@ struct SessionGroupListView: View {
             editName = group.name
             editDirectory = group.directory ?? ""
             editInitialCommand = group.initialCommand ?? ""
+            editOpenInVSCode = group.openInVSCode
             withAnimation(.easeInOut(duration: 0.2)) {
                 store.setGroupCollapsed(group.id, collapsed: false)
                 isEditingSettings = true
@@ -432,6 +442,37 @@ struct SessionGroupListView: View {
                 isSettingsHovered = hovering
             }
         }
+    }
+
+    private func vsCodeButton(directory: String) -> some View {
+        Button {
+            openInVSCode(directory: directory)
+        } label: {
+            Image(systemName: "chevron.left.forwardslash.chevron.right")
+                .font(.system(size: 13))
+                .foregroundColor(groupTitleColor)
+                .frame(width: 24, height: 24)
+                .background(isVSCodeHovered ? OcakTheme.buttonHoverBackground : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help("Open in VS Code")
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isVSCodeHovered = hovering
+            }
+        }
+    }
+
+    private func openInVSCode(directory: String) {
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.microsoft.VSCode") else { return }
+        let config = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.open(
+            [URL(fileURLWithPath: directory)],
+            withApplicationAt: appURL,
+            configuration: config
+        )
     }
 
     private var newSessionButton: some View {
@@ -613,6 +654,18 @@ struct SessionGroupListView: View {
             Spacer()
                 .frame(height: 12)
 
+            Toggle(isOn: $editOpenInVSCode) {
+                Text("SHOW VS CODE BUTTON")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundColor(OcakTheme.sectionLabel)
+                    .kerning(0.8)
+            }
+            .toggleStyle(.switch)
+            .controlSize(.mini)
+
+            Spacer()
+                .frame(height: 12)
+
             HStack {
                 deleteButton
 
@@ -628,7 +681,7 @@ struct SessionGroupListView: View {
                 Button("Save") {
                     let dir = editDirectory.trimmingCharacters(in: .whitespaces)
                     let cmd = editInitialCommand.trimmingCharacters(in: .whitespaces)
-                    onSaveGroupSettings(editName, dir.isEmpty ? nil : dir, cmd.isEmpty ? nil : cmd)
+                    onSaveGroupSettings(editName, dir.isEmpty ? nil : dir, cmd.isEmpty ? nil : cmd, editOpenInVSCode)
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isEditingSettings = false
                     }

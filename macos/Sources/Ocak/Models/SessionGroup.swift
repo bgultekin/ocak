@@ -8,6 +8,7 @@ struct SessionGroup: Identifiable, Codable {
     var order: Int
     var createdAt: Date
     var isCollapsed: Bool
+    var openInVSCode: Bool
 
     init(
         id: UUID = UUID(),
@@ -15,7 +16,8 @@ struct SessionGroup: Identifiable, Codable {
         directory: String? = nil,
         initialCommand: String? = nil,
         order: Int = 0,
-        isCollapsed: Bool = false
+        isCollapsed: Bool = false,
+        openInVSCode: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -24,9 +26,10 @@ struct SessionGroup: Identifiable, Codable {
         self.order = order
         self.createdAt = Date()
         self.isCollapsed = isCollapsed
+        self.openInVSCode = openInVSCode
     }
 
-    // Custom decoder so legacy UserDefaults data (without isCollapsed) still loads.
+    // Custom decoder so legacy UserDefaults data (without isCollapsed/openInVSCode) still loads.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -36,5 +39,6 @@ struct SessionGroup: Identifiable, Codable {
         order = try container.decode(Int.self, forKey: .order)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         isCollapsed = try container.decodeIfPresent(Bool.self, forKey: .isCollapsed) ?? false
+        openInVSCode = try container.decodeIfPresent(Bool.self, forKey: .openInVSCode) ?? false
     }
 }
