@@ -106,13 +106,18 @@ private struct VSCodeButton: View {
 
     var body: some View {
         Button(action: openInVSCode) {
-            Image(systemName: "chevron.left.forwardslash.chevron.right")
-                .font(.system(size: 12))
-                .foregroundColor(OcakTheme.sectionLabel)
-                .frame(width: 24, height: 24)
-                .background(isHovered ? OcakTheme.buttonHoverBackground : Color.clear)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .contentShape(RoundedRectangle(cornerRadius: 6))
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.left.forwardslash.chevron.right")
+                    .font(.system(size: 11))
+                Text("VS Code")
+                    .font(.system(size: 11))
+            }
+            .foregroundColor(OcakTheme.sectionLabel)
+            .padding(.horizontal, 8)
+            .frame(height: 24)
+            .background(isHovered ? OcakTheme.buttonHoverBackground : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .contentShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
         .help("Open in VS Code")
