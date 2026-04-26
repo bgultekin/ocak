@@ -2,10 +2,11 @@ import CoreGraphics
 import Foundation
 
 final class DoubleTapDetector {
-    var modifier: DoubleTapModifier
-    var thresholdMs: Int
+    private(set) var modifier: DoubleTapModifier
+    private(set) var thresholdMs: Int
     var onDoubleTap: (() -> Void)?
 
+    private let stateLock = NSLock()
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var tapRunLoop: CFRunLoop?
@@ -64,21 +65,35 @@ final class DoubleTapDetector {
         eventTap = nil
         runLoopSource = nil
         tapRunLoop = nil
+        stateLock.lock()
         lastTapTime = nil
         lastFlagsHadModifier = false
+        stateLock.unlock()
     }
 
     private func handleFlagsChanged(event: CGEvent) {
+        stateLock.lock()
         let nowHas = event.flags.contains(modifier.cgEventFlag)
-        defer { lastFlagsHadModifier = nowHas }
-        guard nowHas && !lastFlagsHadModifier else { return }
+        let hadModifier = lastFlagsHadModifier
+        lastFlagsHadModifier = nowHas
+        stateLock.unlock()
+
+        guard nowHas && !hadModifier else { return }
+
+        stateLock.lock()
+        let previous = lastTapTime
+        stateLock.unlock()
 
         let now = Date()
-        if Self.isDoubleTap(previousTap: lastTapTime, currentTap: now, thresholdMs: thresholdMs) {
+        if Self.isDoubleTap(previousTap: previous, currentTap: now, thresholdMs: thresholdMs) {
+            stateLock.lock()
             lastTapTime = nil
+            stateLock.unlock()
             DispatchQueue.main.async { self.onDoubleTap?() }
         } else {
+            stateLock.lock()
             lastTapTime = now
+            stateLock.unlock()
         }
     }
 

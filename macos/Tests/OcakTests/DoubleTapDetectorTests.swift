@@ -1,7 +1,6 @@
 import Testing
 import Foundation
 
-// Mirror the pure timing logic (cannot import executable target)
 private func isDoubleTap(previousTap: Date?, currentTap: Date, thresholdMs: Int) -> Bool {
     guard let previous = previousTap else { return false }
     return currentTap.timeIntervalSince(previous) * 1000 < Double(thresholdMs)
