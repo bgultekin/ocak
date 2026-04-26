@@ -10,6 +10,7 @@ struct SettingsView: View {
     @State private var ribbonStyle: RibbonStyle = RibbonConfigStore.shared.ribbonStyle
     @State private var appearanceMode: AppearanceMode = AppearanceConfigStore.shared.mode
     @State private var terminalThemeMode: TerminalThemeMode = TerminalThemeConfigStore.shared.mode
+    private let hotkeyConfig = HotkeyConfigStore.shared
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -54,10 +55,44 @@ struct SettingsView: View {
 
     private var generalTab: some View {
         VStack(alignment: .leading, spacing: 20) {
-            HStack {
-                Text("Show panel shortcut")
-                Spacer()
-                KeyboardShortcuts.Recorder(for: .togglePanel)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Show panel shortcut")
+                    Spacer()
+                    Picker("", selection: Binding(
+                        get: { hotkeyConfig.mode },
+                        set: { hotkeyConfig.setMode($0) }
+                    )) {
+                        Text("Double-tap").tag(HotkeyMode.doubleTap)
+                        Text("Key combination").tag(HotkeyMode.combination)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 200)
+                }
+
+                if hotkeyConfig.mode == .doubleTap {
+                    HStack {
+                        Text("Modifier key")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Picker("", selection: Binding(
+                            get: { hotkeyConfig.doubleTapModifier },
+                            set: { hotkeyConfig.setDoubleTapModifier($0) }
+                        )) {
+                            ForEach(DoubleTapModifier.allCases, id: \.self) { mod in
+                                Text(mod.displayName).tag(mod)
+                            }
+                        }
+                        .frame(maxWidth: 200)
+                    }
+                } else {
+                    HStack {
+                        Text("Key combination")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        KeyboardShortcuts.Recorder(for: .togglePanel)
+                    }
+                }
             }
 
             Divider()
@@ -267,8 +302,13 @@ struct SettingsView: View {
         case .invisible:
             return "A transparent bar with minimal visual presence."
         case .none:
-            let shortcut = KeyboardShortcuts.getShortcut(for: .togglePanel)?.description ?? "your configured shortcut"
-            return "The ribbon is hidden. Use \(shortcut) to reveal the drawer."
+            let hint: String
+            if hotkeyConfig.mode == .doubleTap {
+                hint = "double-tap \(hotkeyConfig.doubleTapModifier.displayName)"
+            } else {
+                hint = KeyboardShortcuts.getShortcut(for: .togglePanel)?.description ?? "your configured shortcut"
+            }
+            return "The ribbon is hidden. Use \(hint) to reveal the drawer."
         }
     }
 
