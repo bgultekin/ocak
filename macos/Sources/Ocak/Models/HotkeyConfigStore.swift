@@ -64,6 +64,11 @@ final class HotkeyConfigStore {
         persist()
     }
 
+    func setDoubleTapThresholdMs(_ ms: Int) {
+        doubleTapThresholdMs = max(50, min(ms, 2000))
+        persist()
+    }
+
     private func persist() {
         let ud = UserDefaults.standard
         ud.set(mode.rawValue,              forKey: Self.modeKey)
