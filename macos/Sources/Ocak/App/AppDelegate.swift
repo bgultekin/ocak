@@ -488,7 +488,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     // MARK: - Hotkey
 
+    private var combinationHotkeyEnabled = false
+
     private func setupHotkey() {
+        KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
+            guard let self, self.combinationHotkeyEnabled else { return }
+            self.toggleDrawer()
+        }
         applyHotkeyMode(hotkeyConfig.mode)
         observeHotkeyConfig()
     }
@@ -510,14 +516,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func applyHotkeyMode(_ mode: HotkeyMode) {
         doubleTapDetector?.stop()
         doubleTapDetector = nil
-        KeyboardShortcuts.removeHandler(for: .togglePanel)
 
         switch mode {
         case .combination:
-            KeyboardShortcuts.onKeyUp(for: .togglePanel) { [weak self] in
-                self?.toggleDrawer()
-            }
+            combinationHotkeyEnabled = true
         case .doubleTap:
+            combinationHotkeyEnabled = false
             let detector = DoubleTapDetector(
                 modifier: hotkeyConfig.doubleTapModifier,
                 thresholdMs: hotkeyConfig.doubleTapThresholdMs
