@@ -65,7 +65,7 @@ enum HookInstaller {
     }
 
     /// Updates the installed ocak plugin if a newer version is bundled in the app.
-    /// Returns true if an update was performed, false if no update was needed.
+    /// Returns true if an update was actually performed, false otherwise.
     @discardableResult
     static func updatePluginIfNeeded() throws -> Bool {
         let bundledVersion = try PluginVersionManager.readBundledPluginVersion()
@@ -84,8 +84,17 @@ enum HookInstaller {
             throw InstallError.commandFailed("claude not found in PATH")
         }
 
-        try runShell("'\(claudePath)' plugin install ocak@ocak-plugins --scope user", loginPath: loginPath)
-        return true
+        // Refresh claude's cached marketplace metadata so the upgrade sees the new version.
+        // Without this, claude reads stale marketplace data and skips the upgrade.
+        _ = try? runShell("'\(claudePath)' plugin marketplace update ocak-plugins", loginPath: loginPath)
+
+        // Use `plugin update` (not `plugin install`) to actually upgrade an installed plugin.
+        // `plugin install` is install-only and reports "already installed" without upgrading.
+        try runShell("'\(claudePath)' plugin update ocak@ocak-plugins --scope user", loginPath: loginPath)
+
+        // Verify the upgrade actually happened; the CLI can succeed without changing the version.
+        let postInstallVersion = try PluginVersionManager.readInstalledPluginVersion()
+        return postInstallVersion == bundled
     }
 
     // MARK: - OpenCode
