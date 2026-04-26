@@ -1,9 +1,12 @@
 import SwiftUI
+import AppKit
 
 /// The terminal pane shown in the drawer when a session is selected.
 struct TerminalPaneView: View {
     let session: ThreadSession?
     let groupName: String?
+    let groupDirectory: String?
+    let groupOpenInVSCode: Bool
     let initialCommand: String?
     var onStatusChange: ((UUID, SessionStatus) -> Void)?
     var onDirectoryChange: ((UUID, String) -> Void)?
@@ -67,6 +70,10 @@ struct TerminalPaneView: View {
 
             Spacer()
 
+            if groupOpenInVSCode, let dir = groupDirectory, !dir.isEmpty {
+                VSCodeButton(directory: dir)
+            }
+
             if let onClose {
                 CloseButton(action: onClose)
             }
@@ -90,6 +97,40 @@ struct TerminalPaneView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OcakTheme.terminalBackground)
+    }
+}
+
+private struct VSCodeButton: View {
+    let directory: String
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: openInVSCode) {
+            Image(systemName: "chevron.left.forwardslash.chevron.right")
+                .font(.system(size: 12))
+                .foregroundColor(OcakTheme.sectionLabel)
+                .frame(width: 24, height: 24)
+                .background(isHovered ? OcakTheme.buttonHoverBackground : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help("Open in VS Code")
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+    }
+
+    private func openInVSCode() {
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.microsoft.VSCode") else { return }
+        let config = NSWorkspace.OpenConfiguration()
+        NSWorkspace.shared.open(
+            [URL(fileURLWithPath: directory)],
+            withApplicationAt: appURL,
+            configuration: config
+        )
     }
 }
 
