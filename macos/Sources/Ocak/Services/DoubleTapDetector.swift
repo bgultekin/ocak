@@ -12,6 +12,7 @@ final class DoubleTapDetector {
     private var tapRunLoop: CFRunLoop?
     private var retainedSelfPtr: UnsafeMutableRawPointer?
     private var pendingStop = false
+    private var isStopped = false
     private var lastTapTime: Date?
     private var lastFlagsHadModifier = false
 
@@ -52,6 +53,7 @@ final class DoubleTapDetector {
         retainedSelfPtr = selfPtr
         runLoopSource = source
         pendingStop = false
+        isStopped = false
         stateLock.unlock()
 
         let thread = Thread {
@@ -88,6 +90,7 @@ final class DoubleTapDetector {
         retainedSelfPtr = nil
         lastTapTime = nil
         lastFlagsHadModifier = false
+        isStopped = true
         stateLock.unlock()
 
         if let tap {
@@ -117,7 +120,15 @@ final class DoubleTapDetector {
             stateLock.lock()
             lastTapTime = nil
             stateLock.unlock()
-            DispatchQueue.main.async { self.onDoubleTap?() }
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.stateLock.lock()
+                let stopped = self.isStopped
+                let callback = self.onDoubleTap
+                self.stateLock.unlock()
+                guard !stopped else { return }
+                callback?()
+            }
         } else {
             stateLock.lock()
             lastTapTime = now
