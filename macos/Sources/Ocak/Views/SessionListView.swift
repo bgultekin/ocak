@@ -437,6 +437,7 @@ struct SessionGroupListView: View {
                 .contentShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
+        .help("Group settings")
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isSettingsHovered = hovering
@@ -486,6 +487,7 @@ struct SessionGroupListView: View {
                 .contentShape(RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)
+        .help("New terminal")
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) {
                 isNewSessionHovered = hovering
