@@ -153,12 +153,38 @@ PLIST
 # signature on the executable leaves the bundle's Info.plist unbound, which
 # prevents TCC from binding Accessibility (and similar) permission grants to
 # com.ocak.app — the user grants the permission but AXIsProcessTrusted() keeps
-# returning false. The "unsealed contents present in the bundle root" warning
-# is expected: SPM places resource bundles at the .app root (not in
-# Contents/Resources/) so Bundle.module can find them, and codesign cannot
-# seal those. Contents/ itself is sealed correctly, which is what TCC uses.
+# returning false.
+#
+# SPM places its resource bundles at the .app root (not in Contents/Resources)
+# so Bundle.module can find them, but codesign rejects that layout with
+# "unsealed contents present in the bundle root" (warning locally, hard error
+# on CI). We move the resource bundles aside, sign cleanly, then put them back.
+# Contents/ itself ends up sealed, which is what TCC uses.
+SIGN_HOLD=$(mktemp -d)
+restore_spm_bundles() {
+    [ -n "${SIGN_HOLD:-}" ] && [ -d "$SIGN_HOLD" ] || return 0
+    shopt -s nullglob
+    for b in "$SIGN_HOLD"/*.bundle; do
+        [ -d "$b" ] && mv "$b" "$APP_BUNDLE/"
+    done
+    shopt -u nullglob
+    rmdir "$SIGN_HOLD" 2>/dev/null || true
+    SIGN_HOLD=""
+}
+trap restore_spm_bundles EXIT
+
+shopt -s nullglob
+SPM_BUNDLES=("$APP_BUNDLE"/*.bundle)
+shopt -u nullglob
+for b in "${SPM_BUNDLES[@]}"; do
+    mv "$b" "$SIGN_HOLD/"
+done
+
 echo "Adhoc-signing app bundle..."
 codesign --force --sign - "$APP_BUNDLE"
+
+restore_spm_bundles
+trap - EXIT
 
 echo "App bundle: $APP_BUNDLE"
 
