@@ -148,6 +148,18 @@ cat > "$APP_BUNDLE/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
+# Adhoc-sign the bundle so Info.plist is bound to the executable's signature
+# and Contents/ resources are sealed. Without this, the linker-injected adhoc
+# signature on the executable leaves the bundle's Info.plist unbound, which
+# prevents TCC from binding Accessibility (and similar) permission grants to
+# com.ocak.app — the user grants the permission but AXIsProcessTrusted() keeps
+# returning false. The "unsealed contents present in the bundle root" warning
+# is expected: SPM places resource bundles at the .app root (not in
+# Contents/Resources/) so Bundle.module can find them, and codesign cannot
+# seal those. Contents/ itself is sealed correctly, which is what TCC uses.
+echo "Adhoc-signing app bundle..."
+codesign --force --sign - "$APP_BUNDLE"
+
 echo "App bundle: $APP_BUNDLE"
 
 DMG_PATH="$DIST_DIR/$APP_NAME.dmg"
