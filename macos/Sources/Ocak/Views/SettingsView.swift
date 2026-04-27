@@ -199,7 +199,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.orange)
+                    .foregroundColor(OcakTheme.warningIcon)
                 Text("Ocak needs Accessibility access to detect the double-tap when another app is focused.")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -215,7 +215,7 @@ struct SettingsView: View {
             }
         }
         .padding(10)
-        .background(Color.orange.opacity(0.08))
+        .background(OcakTheme.warningBackground)
         .cornerRadius(6)
     }
 
