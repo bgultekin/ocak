@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var appearanceMode: AppearanceMode = AppearanceConfigStore.shared.mode
     @State private var terminalThemeMode: TerminalThemeMode = TerminalThemeConfigStore.shared.mode
     private let hotkeyConfig = HotkeyConfigStore.shared
+    @State private var accessibilityTrusted: Bool = AccessibilityPermission.isTrusted
+    private let accessibilityPollTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -20,6 +22,9 @@ struct SettingsView: View {
             content
         }
         .frame(minWidth: 600, idealWidth: 600, minHeight: 300)
+        .onReceive(accessibilityPollTimer) { _ in
+            accessibilityTrusted = AccessibilityPermission.isTrusted
+        }
     }
 
     // MARK: - Sidebar
@@ -84,6 +89,9 @@ struct SettingsView: View {
                             }
                         }
                         .frame(maxWidth: 200)
+                    }
+                    if !accessibilityTrusted {
+                        accessibilityBanner
                     }
                 } else {
                     HStack {
@@ -185,6 +193,30 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(20)
+    }
+
+    private var accessibilityBanner: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                Text("Ocak needs Accessibility access to detect the double-tap when another app is focused.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            HStack(spacing: 8) {
+                Button("Open System Settings") {
+                    AccessibilityPermission.openSystemSettings()
+                }
+                Button("Re-prompt") {
+                    AccessibilityPermission.requestAccess()
+                }
+            }
+        }
+        .padding(10)
+        .background(Color.orange.opacity(0.08))
+        .cornerRadius(6)
     }
 
     private func screenLabel(_ screen: NSScreen) -> some View {
