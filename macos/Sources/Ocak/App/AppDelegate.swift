@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let panelSizeStore = PanelSizeStore.shared
     private let hotkeyConfig = HotkeyConfigStore.shared
     private var doubleTapDetector: DoubleTapDetector?
+    private var accessibilityWatchTimer: Timer?
 
     private static let smokeRibbonWidthFactor: CGFloat = 0.06
 
@@ -516,19 +517,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func applyHotkeyMode(_ mode: HotkeyMode) {
         doubleTapDetector?.stop()
         doubleTapDetector = nil
+        accessibilityWatchTimer?.invalidate()
+        accessibilityWatchTimer = nil
 
         switch mode {
         case .combination:
             combinationHotkeyEnabled = true
         case .doubleTap:
             combinationHotkeyEnabled = false
-            let detector = DoubleTapDetector(
-                modifier: hotkeyConfig.doubleTapModifier,
-                thresholdMs: hotkeyConfig.doubleTapThresholdMs
-            )
-            detector.onDoubleTap = { [weak self] in self?.toggleDrawer() }
-            detector.start()
-            doubleTapDetector = detector
+            if AccessibilityPermission.isTrusted {
+                let detector = DoubleTapDetector(
+                    modifier: hotkeyConfig.doubleTapModifier,
+                    thresholdMs: hotkeyConfig.doubleTapThresholdMs
+                )
+                detector.onDoubleTap = { [weak self] in self?.toggleDrawer() }
+                detector.start()
+                doubleTapDetector = detector
+            } else {
+                AccessibilityPermission.requestAccess()
+                accessibilityWatchTimer = AccessibilityPermission.startMonitoring { [weak self] in
+                    self?.applyHotkeyMode(.doubleTap)
+                }
+            }
         }
     }
 }

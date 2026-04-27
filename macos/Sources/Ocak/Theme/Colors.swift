@@ -31,6 +31,12 @@ enum OcakTheme {
     // oklch(0.75 0.165 45) ≈ sRGB(1.0, 0.530, 0.298) at 0.7 opacity
     static let activeBorder = Color(red: 1.0, green: 0.530, blue: 0.298).opacity(0.7)
 
+    static let warningIcon = Color.orange
+
+    static var warningBackground: Color {
+        effectiveMode == .dark ? Color.orange.opacity(0.1) : Color.orange.opacity(0.08)
+    }
+
     static var statusBlueBackground: Color {
         effectiveMode == .dark ? Color(hex: 0x0A84FF).opacity(0.1) : Color(hex: 0x0A84FF).opacity(0.08)
     }
