@@ -13,6 +13,7 @@ final class DoubleTapDetector {
     private var retainedSelfPtr: UnsafeMutableRawPointer?
     private var pendingStop = false
     private var isStopped = false
+    private var workerThread: Thread?
     private var lastTapTime: Date?
     private var lastFlagsHadModifier = false
 
@@ -32,12 +33,14 @@ final class DoubleTapDetector {
             place: .headInsertEventTap,
             options: .listenOnly,
             eventsOfInterest: mask,
-            callback: { _, _, event, refcon -> Unmanaged<CGEvent>? in
+            callback: { _, type, event, refcon -> Unmanaged<CGEvent>? in
                 guard let refcon else { return Unmanaged.passUnretained(event) }
-                Unmanaged<DoubleTapDetector>
-                    .fromOpaque(refcon)
-                    .takeUnretainedValue()
-                    .handleFlagsChanged(event: event)
+                let detector = Unmanaged<DoubleTapDetector>.fromOpaque(refcon).takeUnretainedValue()
+                if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                    detector.reenableTap()
+                } else if type == .flagsChanged {
+                    detector.handleFlagsChanged(event: event)
+                }
                 return Unmanaged.passUnretained(event)
             },
             userInfo: selfPtr
@@ -47,14 +50,6 @@ final class DoubleTapDetector {
         }
 
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-
-        stateLock.lock()
-        eventTap = tap
-        retainedSelfPtr = selfPtr
-        runLoopSource = source
-        pendingStop = false
-        isStopped = false
-        stateLock.unlock()
 
         let thread = Thread {
             let rl = CFRunLoopGetCurrent()!
@@ -70,6 +65,16 @@ final class DoubleTapDetector {
             CFRunLoopRun()
         }
         thread.qualityOfService = QualityOfService.userInteractive
+
+        stateLock.lock()
+        eventTap = tap
+        retainedSelfPtr = selfPtr
+        runLoopSource = source
+        pendingStop = false
+        isStopped = false
+        workerThread = thread
+        stateLock.unlock()
+
         thread.start()
     }
 
@@ -88,6 +93,7 @@ final class DoubleTapDetector {
         runLoopSource = nil
         tapRunLoop = nil
         retainedSelfPtr = nil
+        workerThread = nil
         lastTapTime = nil
         lastFlagsHadModifier = false
         isStopped = true
@@ -99,6 +105,16 @@ final class DoubleTapDetector {
         }
         if let ptr {
             Unmanaged<DoubleTapDetector>.fromOpaque(ptr).release()
+        }
+    }
+
+    private func reenableTap() {
+        stateLock.lock()
+        let tap = eventTap
+        let stopped = isStopped
+        stateLock.unlock()
+        if let tap, !stopped {
+            CGEvent.tapEnable(tap: tap, enable: true)
         }
     }
 
