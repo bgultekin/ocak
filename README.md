@@ -15,6 +15,8 @@
 ![Swift](https://img.shields.io/badge/Swift-5.9-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-early-yellow)
+![GitHub Release](https://img.shields.io/github/v/release/bgultekin/ocak)
+
 
 
 </div>
