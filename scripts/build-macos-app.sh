@@ -161,6 +161,18 @@ PLIST
 # on CI). We move the resource bundles aside, sign cleanly, then put them back.
 # Contents/ itself ends up sealed, which is what TCC uses.
 SIGN_HOLD=$(mktemp -d)
+restore_spm_bundles() {
+    [ -n "${SIGN_HOLD:-}" ] && [ -d "$SIGN_HOLD" ] || return 0
+    shopt -s nullglob
+    for b in "$SIGN_HOLD"/*.bundle; do
+        [ -d "$b" ] && mv "$b" "$APP_BUNDLE/"
+    done
+    shopt -u nullglob
+    rmdir "$SIGN_HOLD" 2>/dev/null || true
+    SIGN_HOLD=""
+}
+trap restore_spm_bundles EXIT
+
 shopt -s nullglob
 SPM_BUNDLES=("$APP_BUNDLE"/*.bundle)
 shopt -u nullglob
@@ -171,10 +183,8 @@ done
 echo "Adhoc-signing app bundle..."
 codesign --force --sign - "$APP_BUNDLE"
 
-for b in "$SIGN_HOLD"/*.bundle; do
-    [ -d "$b" ] && mv "$b" "$APP_BUNDLE/"
-done
-rmdir "$SIGN_HOLD"
+restore_spm_bundles
+trap - EXIT
 
 echo "App bundle: $APP_BUNDLE"
 
