@@ -24,15 +24,29 @@ final class HookServer {
             do {
                 let params = NWParameters.tcp
                 let listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: candidate)!)
+                let semaphore = DispatchSemaphore(value: 0)
+                var listenerReady = false
                 listener.stateUpdateHandler = { state in
-                    if case .failed(let error) = state {
+                    switch state {
+                    case .ready:
+                        listenerReady = true
+                        semaphore.signal()
+                    case .failed(let error):
                         print("[HookServer] listener failed on port \(candidate): \(error)")
+                        semaphore.signal()
+                    default:
+                        break
                     }
                 }
                 listener.newConnectionHandler = { [weak self] connection in
                     self?.accept(connection)
                 }
                 listener.start(queue: .global(qos: .utility))
+                semaphore.wait()
+                guard listenerReady else {
+                    listener.cancel()
+                    continue
+                }
                 self.listener = listener
                 self.port = candidate
                 Self.activePort = candidate
