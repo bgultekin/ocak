@@ -103,7 +103,7 @@ final class TerminalManager {
 
     private func forceRedraw(_ termView: OcakTerminalView) {
         let term = termView.getTerminal()
-        term.refresh(startRow: 0, endRow: term.rows)
+        term.refresh(startRow: 0, endRow: term.rows - 1)
         let size = termView.frame.size
         if size.width > 0, size.height > 0 {
             termView.setFrameSize(size)
