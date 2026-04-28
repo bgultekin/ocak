@@ -237,7 +237,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if inZone && !isInHoverZone {
             isInHoverZone = true
             hoverScreen = screen
-            if style != .none,
+            if TriggerConfigStore.shared.hoverEnabled,
                drawerPanel == nil || !drawerPanel!.isVisible {
                 startDwellTimer()
             }
@@ -498,6 +498,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
         applyHotkeyMode(hotkeyConfig.mode)
         observeHotkeyConfig()
+        observeTriggerConfig()
     }
 
     private func observeHotkeyConfig() {
@@ -514,17 +515,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    private func observeTriggerConfig() {
+        withObservationTracking {
+            _ = TriggerConfigStore.shared.hotkeyEnabled
+        } onChange: { [weak self] in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.applyHotkeyMode(self.hotkeyConfig.mode)
+                self.observeTriggerConfig()
+            }
+        }
+    }
+
     private func applyHotkeyMode(_ mode: HotkeyMode) {
         doubleTapDetector?.stop()
         doubleTapDetector = nil
         accessibilityWatchTimer?.invalidate()
         accessibilityWatchTimer = nil
+        combinationHotkeyEnabled = false
+
+        guard TriggerConfigStore.shared.hotkeyEnabled else { return }
 
         switch mode {
         case .combination:
             combinationHotkeyEnabled = true
         case .doubleTap:
-            combinationHotkeyEnabled = false
             if AccessibilityPermission.isTrusted {
                 let detector = DoubleTapDetector(
                     modifier: hotkeyConfig.doubleTapModifier,
