@@ -25,6 +25,7 @@ final class DrawerPanel: NSPanel {
     private var localClickMonitor: Any?
     var onDismiss: (() -> Void)?
     private var edge: PanelEdge = .right
+    private var isBeingDismissed = false
 
     init() {
         super.init(
@@ -114,6 +115,7 @@ final class DrawerPanel: NSPanel {
         bg.layer?.add(slide, forKey: "slideIn")
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            guard !self.isBeingDismissed else { return }
             bg.layer?.transform = CATransform3DIdentity
             bg.layer?.removeAnimation(forKey: "slideIn")
             self.makeKey()
@@ -124,6 +126,7 @@ final class DrawerPanel: NSPanel {
     }
 
     func slideOut(completion: (() -> Void)? = nil) {
+        isBeingDismissed = true
         removeClickOutsideMonitor()
 
         guard let bg = contentView else {
