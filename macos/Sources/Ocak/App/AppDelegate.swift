@@ -396,7 +396,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         updateStatusIcon()
         let menu = NSMenu()
-        let settingsItem = NSMenuItem(title: "Settings\u{2026}",
+        let settingsItem = NSMenuItem(title: "Settings",
                                        action: #selector(openSettings),
                                        keyEquivalent: "")
         settingsItem.target = self
@@ -404,7 +404,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                                    action: #selector(NSApplication.terminate(_:)),
                                    keyEquivalent: "q")
         quitItem.target = NSApp
+        let checkForUpdatesItem = NSMenuItem(title: "Check for Updates",
+                                              action: #selector(checkForUpdates),
+                                              keyEquivalent: "")
+        checkForUpdatesItem.target = self
         menu.addItem(settingsItem)
+        menu.addItem(checkForUpdatesItem)
         menu.addItem(NSMenuItem.separator())
         menu.addItem(quitItem)
         statusItem.menu = menu
@@ -435,6 +440,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     // MARK: - Settings Window
+
+    @objc private func checkForUpdates() {
+        updateService.checkNow()
+    }
 
     @objc private func openSettings() {
         if settingsWindow != nil {

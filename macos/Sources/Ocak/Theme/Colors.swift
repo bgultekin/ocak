@@ -84,6 +84,10 @@ enum OcakTheme {
         effectiveMode == .dark ? Color(hex: 0xAEAEB2) : Color(hex: 0x1C1C1E)
     }
 
+    // MARK: - CTA / link backgrounds
+
+    static let ctaBackground = Color.primary.opacity(0.08)
+
     // MARK: - Button backgrounds
 
     static var buttonBackground: Color {
