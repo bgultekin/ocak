@@ -160,6 +160,7 @@ final class TerminalManager {
         env["TERM_PROGRAM"] = "Ocak"
         env["TERM_PROGRAM_VERSION"] = "1.0"
         env["OCAK_SESSION_ID"] = sessionID.uuidString
+        env["OCAK_HOOK_PORT"] = String(HookServer.activePort ?? HookServer.defaultPort)
         env["HISTSIZE"] = "10000"
         env["SAVEHIST"] = "10000"
         env["PATH"] = Self.expandedPath(current: env["PATH"])
