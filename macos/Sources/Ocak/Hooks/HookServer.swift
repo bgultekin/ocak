@@ -2,8 +2,11 @@ import Network
 import Foundation
 import Darwin
 
-/// Minimal TCP server that accepts HTTP POST requests on a fixed port
-/// and dispatches parsed HookEvent values to a handler closure.
+/// Minimal TCP server that probes `portRange` (starting at `defaultPort`) for
+/// an available port, binds the first free one, and dispatches parsed HookEvent
+/// values to a handler closure. The resolved port is stored in `activePort`
+/// (mirrored as `OCAK_HOOK_PORT`); clients should read `activePort` to discover
+/// the runtime port rather than assuming `defaultPort`.
 final class HookServer {
     static let defaultPort: UInt16 = 27832
     static let portRange: ClosedRange<UInt16> = 27832...27931
@@ -26,13 +29,17 @@ final class HookServer {
                 let listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: candidate)!)
                 let semaphore = DispatchSemaphore(value: 0)
                 var listenerReady = false
-                listener.stateUpdateHandler = { state in
+                listener.stateUpdateHandler = { [weak self] state in
                     switch state {
                     case .ready:
                         listenerReady = true
                         semaphore.signal()
                     case .failed(let error):
                         print("[HookServer] listener failed on port \(candidate): \(error)")
+                        listener.cancel()
+                        self?.listener = nil
+                        self?.port = 0
+                        Self.activePort = nil
                         semaphore.signal()
                     default:
                         break
