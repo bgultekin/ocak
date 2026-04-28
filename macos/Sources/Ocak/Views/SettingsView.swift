@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var appearanceMode: AppearanceMode = AppearanceConfigStore.shared.mode
     @State private var terminalThemeMode: TerminalThemeMode = TerminalThemeConfigStore.shared.mode
     private let hotkeyConfig = HotkeyConfigStore.shared
+    private let triggerConfig = TriggerConfigStore.shared
     @State private var accessibilityTrusted: Bool = AccessibilityPermission.isTrusted
     private let accessibilityPollTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @Environment(\.colorScheme) private var colorScheme
@@ -21,7 +22,7 @@ struct SettingsView: View {
             Divider()
             content
         }
-        .frame(minWidth: 600, idealWidth: 600, minHeight: 300)
+        .frame(minWidth: 600, idealWidth: 600, minHeight: 500)
         .onReceive(accessibilityPollTimer) { _ in
             accessibilityTrusted = AccessibilityPermission.isTrusted
         }
@@ -47,6 +48,8 @@ struct SettingsView: View {
         switch selectedTab {
         case .general:
             generalTab
+        case .trigger:
+            triggerTab
         case .appearance:
             appearanceTab
         case .plugin:
@@ -60,51 +63,6 @@ struct SettingsView: View {
 
     private var generalTab: some View {
         VStack(alignment: .leading, spacing: 20) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Show panel shortcut")
-                    Spacer()
-                    Picker("", selection: Binding(
-                        get: { hotkeyConfig.mode },
-                        set: { hotkeyConfig.setMode($0) }
-                    )) {
-                        Text("Double-tap").tag(HotkeyMode.doubleTap)
-                        Text("Key combination").tag(HotkeyMode.combination)
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: 200)
-                }
-
-                if hotkeyConfig.mode == .doubleTap {
-                    HStack {
-                        Text("Modifier key")
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Picker("", selection: Binding(
-                            get: { hotkeyConfig.doubleTapModifier },
-                            set: { hotkeyConfig.setDoubleTapModifier($0) }
-                        )) {
-                            ForEach(DoubleTapModifier.allCases, id: \.self) { mod in
-                                Text(mod.displayName).tag(mod)
-                            }
-                        }
-                        .frame(maxWidth: 200)
-                    }
-                    if !accessibilityTrusted {
-                        accessibilityBanner
-                    }
-                } else {
-                    HStack {
-                        Text("Key combination")
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        KeyboardShortcuts.Recorder(for: .togglePanel)
-                    }
-                }
-            }
-
-            Divider()
-
             HStack {
                 Text("Launch at login")
                 Spacer()
@@ -187,6 +145,103 @@ struct SettingsView: View {
                         .frame(width: 100)
                         .disabled(!isChecked)
                     }
+                }
+            }
+
+            Spacer()
+        }
+        .padding(20)
+    }
+
+    // MARK: - Trigger Tab
+
+    private var triggerTab: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Hover to reveal")
+                        Text("Hover the edge ribbon to open the drawer.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { triggerConfig.hoverEnabled },
+                        set: { triggerConfig.setHoverEnabled($0) }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+            }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Shortcut")
+                        Text("Use a keyboard shortcut to toggle the drawer.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { triggerConfig.hotkeyEnabled },
+                        set: { triggerConfig.setHotkeyEnabled($0) }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if triggerConfig.hotkeyEnabled {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Text("Type")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Picker("", selection: Binding(
+                                get: { hotkeyConfig.mode },
+                                set: { hotkeyConfig.setMode($0) }
+                            )) {
+                                Text("Double-tap").tag(HotkeyMode.doubleTap)
+                                Text("Key combination").tag(HotkeyMode.combination)
+                            }
+                            .pickerStyle(.segmented)
+                            .frame(maxWidth: 200)
+                        }
+
+                        if hotkeyConfig.mode == .doubleTap {
+                            HStack {
+                                Text("Modifier key")
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Picker("", selection: Binding(
+                                    get: { hotkeyConfig.doubleTapModifier },
+                                    set: { hotkeyConfig.setDoubleTapModifier($0) }
+                                )) {
+                                    ForEach(DoubleTapModifier.allCases, id: \.self) { mod in
+                                        Text(mod.displayName).tag(mod)
+                                    }
+                                }
+                                .frame(maxWidth: 200)
+                            }
+                            if !accessibilityTrusted {
+                                accessibilityBanner
+                            }
+                        } else {
+                            HStack {
+                                Text("Key combination")
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                KeyboardShortcuts.Recorder(for: .togglePanel)
+                            }
+                        }
+                    }
+                    .padding(12)
+                    .background(Color(nsColor: .quaternarySystemFill))
+                    .cornerRadius(8)
+                    .padding(.top, 4)
                 }
             }
 
@@ -333,14 +388,6 @@ struct SettingsView: View {
             return "A smoke effect with subtle animation."
         case .invisible:
             return "A transparent bar with minimal visual presence."
-        case .none:
-            let hint: String
-            if hotkeyConfig.mode == .doubleTap {
-                hint = "double-tap \(hotkeyConfig.doubleTapModifier.displayName)"
-            } else {
-                hint = KeyboardShortcuts.getShortcut(for: .togglePanel)?.description ?? "your configured shortcut"
-            }
-            return "The ribbon is hidden. Use \(hint) to reveal the drawer."
         }
     }
 
@@ -528,6 +575,7 @@ struct SettingsView: View {
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case general
+    case trigger
     case appearance
     case plugin
     case about
@@ -537,6 +585,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var name: String {
         switch self {
         case .general: return "General"
+        case .trigger: return "Trigger"
         case .appearance: return "Appearance"
         case .plugin: return "Plugin"
         case .about: return "About"
@@ -546,6 +595,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .general: return "gearshape"
+        case .trigger: return "cursorarrow.motionlines"
         case .appearance: return "paintpalette"
         case .plugin: return "puzzlepiece.extension"
         case .about: return "info.circle"

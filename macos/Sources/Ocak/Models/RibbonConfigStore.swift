@@ -5,14 +5,12 @@ enum RibbonStyle: String, Codable, CaseIterable {
     case solid
     case smoke
     case invisible
-    case none
 
     var displayName: String {
         switch self {
         case .solid: return "Solid"
         case .smoke: return "Smoke"
         case .invisible: return "Invisible"
-        case .none: return "None"
         }
     }
 }
