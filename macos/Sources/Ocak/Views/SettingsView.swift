@@ -469,7 +469,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(spacing: 0) {
                 // Icon + identity
-                VStack(spacing: 8) {
+                HStack(alignment: .top, spacing: 16) {
                     Image(nsImage: {
                         let name = colorScheme == .dark ? "ocak-app-icon-dark" : "ocak-app-icon-light"
                         if let url = Bundle.module.url(forResource: name, withExtension: "png"),
@@ -477,24 +477,47 @@ struct SettingsView: View {
                         return NSApp.applicationIconImage
                     }())
                     .resizable()
-                    .frame(width: 80, height: 80)
+                    .frame(width: 120, height: 120)
 
-                    Text("Ocak")
-                        .font(.title2)
-                        .fontWeight(.semibold)
+                    VStack(alignment: .leading, spacing: 15) {
+                        HStack(alignment: .firstTextBaseline, spacing: 0) {
+                            Text("Ocak")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                            Text(" · ")
+                                .font(.title3)
+                                .foregroundColor(.secondary)
+                            Text(versionString)
+                                .font(.callout)
+                                .foregroundColor(.secondary)
+                        }
 
-                    Text("A slide-out terminal drawer with AI coding session tracking")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
+                        Text("A slide-out terminal drawer with AI coding session tracking")
+                            .font(.system(size: NSFont.systemFontSize(for: .small) * 1.2))
+                            .foregroundColor(.secondary)
 
-                    Text(versionString)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        Link(destination: URL(string: "https://github.com/bgultekin/ocak")!) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "arrow.triangle.branch")
+                                    .font(.caption)
+                                Text("Visit Repository")
+                                    .font(.caption)
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.primary.opacity(0.08))
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(.plain)
 
-                    Link("View on GitHub", destination: URL(string: "https://github.com/bgultekin/ocak")!)
-                        .font(.caption)
+                        Text("Made with tokens 🤖, no love included 💔")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 4)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
                 .padding(.top, 24)
                 .padding(.bottom, 20)
 
