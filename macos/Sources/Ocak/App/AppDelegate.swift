@@ -364,8 +364,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func dismissDrawer() {
         store.isPanelVisible = false
-        drawerPanel?.slideOut { [weak self] in
-            self?.drawerPanel = nil
+        let panel = drawerPanel
+        drawerPanel = nil
+        panel?.slideOut { [weak self] in
             self?.store.clearSessionStatuses()
         }
     }
