@@ -60,7 +60,7 @@ enum ShellHookWriter {
         __ocak_status_threshold=2
         __ocak_post_status() {
             [[ -z $OCAK_SESSION_ID ]] && return
-            curl -sf -X POST http://localhost:27832/hook \\
+            curl -sf -X POST http://localhost:${OCAK_HOOK_PORT:-27832}/hook \\
                 -H "Content-Type: application/json" \\
                 -H "X-Ocak-Session: $OCAK_SESSION_ID" \\
                 -d "{\\"hook_event_name\\":\\"$1\\"}" \\
@@ -135,7 +135,7 @@ enum ShellHookWriter {
         __ocak_status_threshold=2
         __ocak_post_status() {
             [ -z "$OCAK_SESSION_ID" ] && return
-            ( curl -sf -X POST http://localhost:27832/hook \\
+            ( curl -sf -X POST http://localhost:${OCAK_HOOK_PORT:-27832}/hook \\
                 -H "Content-Type: application/json" \\
                 -H "X-Ocak-Session: $OCAK_SESSION_ID" \\
                 -d "{\\"hook_event_name\\":\\"$1\\"}" \\

@@ -53,6 +53,7 @@ enum TerminalNameSummarizer {
         }
         // Prevent claude from attempting to use our hook server for its own session.
         env.removeValue(forKey: "OCAK_SESSION_ID")
+        env.removeValue(forKey: "OCAK_HOOK_PORT")
         proc.environment = env
 
         let stdoutPipe = Pipe()

@@ -1,8 +1,9 @@
-// Ocak plugin for OpenCode — sends session events to Ocak's hook server (port 27832)
+// Ocak plugin for OpenCode — sends session events to Ocak's hook server.
 // Installed to ~/.config/opencode/plugins/ocak.js
-// version: 1.0.0
+// version: 1.1.0
 
-const OCAK_HOOK_URL = "http://localhost:27832/hook"
+const OCAK_HOOK_PORT = process.env.OCAK_HOOK_PORT || "27832"
+const OCAK_HOOK_URL = `http://localhost:${OCAK_HOOK_PORT}/hook`
 
 function sendEvent(eventName, cwd) {
   const ocakId = process.env.OCAK_SESSION_ID

@@ -37,9 +37,9 @@ struct HookInstallerTests {
         #expect(try firstCommand().contains("|| true"))
     }
 
-    @Test("plugin.json command posts to port 27832")
+    @Test("plugin.json command posts to OCAK_HOOK_PORT with 27832 fallback")
     func pluginJson_commandCorrectPort() throws {
-        #expect(try firstCommand().contains("http://localhost:27832/hook"))
+        #expect(try firstCommand().contains("http://localhost:${OCAK_HOOK_PORT:-27832}/hook"))
     }
 
     @Test("plugin.json command sends session ID via X-Ocak-Session header")
