@@ -492,7 +492,7 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
 
-                        Text("A slide-out terminal drawer with AI coding session tracking")
+                        Text("A slide-out terminal drawer with AI terminal tracking")
                             .font(.system(size: NSFont.systemFontSize(for: .small) * 1.2))
                             .foregroundColor(.secondary)
 
@@ -505,7 +505,7 @@ struct SettingsView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(Color.primary.opacity(0.08))
+                            .background(OcakTheme.ctaBackground)
                             .cornerRadius(6)
                         }
                         .buttonStyle(.plain)
