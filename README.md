@@ -27,8 +27,9 @@
 Ocak lives in your menu bar and hides a terminal drawer just off the right edge of your screen. Pull it out with a keystroke or a nudge of the mouse, run Claude Code, OpenCode, or whatever shell you want, and let Ocak track what each terminal is doing in the background.
 
 
+<img width="1080" height="698" alt="ocak" src="https://github.com/user-attachments/assets/c34fef4d-c3a8-44cf-811b-2507272578e1" />
 
-<img width="960" height="621" alt="gif" src="https://github.com/user-attachments/assets/6a740295-0693-4bfd-a111-c68092bc0343" />
+
 
 ---
 
@@ -53,7 +54,9 @@ Prefer to build it yourself? See [Build from source](#build-from-source) below.
 
 ## Demo Video
 
-https://github.com/user-attachments/assets/da23a5cf-93c2-4eb4-8a13-8495b46a1f4e
+
+https://github.com/user-attachments/assets/4d8029a0-b37a-4a16-839c-1f5e33e7b665
+
 
 ---
 
