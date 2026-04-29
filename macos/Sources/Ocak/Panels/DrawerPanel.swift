@@ -79,6 +79,8 @@ final class DrawerPanel: NSPanel {
     // MARK: - Slide Animations
 
     func slideIn(on screen: NSScreen, width: CGFloat, edge: PanelEdge, completion: (() -> Void)? = nil) {
+        isBeingDismissed = false
+        alphaValue = 1
         self.edge = edge
         let visibleFrame = screen.visibleFrame
         let panelHeight = visibleFrame.height

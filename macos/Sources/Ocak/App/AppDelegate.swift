@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private var ribbonPanels: [NSPanel] = []
     private var drawerPanel: DrawerPanel?
+    private var isPanelTransitioning = false
     private let store = SessionStore()
     private var hookServer: HookServer?
 
@@ -89,7 +90,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 if let panel = self.drawerPanel, panel.isVisible {
                     let currentWidth = panel.frame.width
                     panel.slideOut { [weak self] in
-                        self?.drawerPanel = nil
                         self?.showDrawer()
                         if let screen = self?.screenForDrawer, let panel = self?.drawerPanel {
                             panel.setWidth(currentWidth, on: screen)
@@ -302,11 +302,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func showDrawer() {
         guard let screen = hoverScreen ?? screenForCurrentMouse() ?? screenConfig.primaryActiveScreen else { return }
         if store.isPanelVisible, drawerPanel?.isVisible == true { return }
+        if isPanelTransitioning { return }
 
         screenForDrawer = screen
         panelSizeStore.load(for: screen)
 
-        let panel = DrawerPanel()
+        let panel: DrawerPanel
+        if let existing = drawerPanel {
+            panel = existing
+        } else {
+            panel = DrawerPanel()
+            drawerPanel = panel
+            panel.onDismiss = { [weak self] in
+                self?.dismissDrawer()
+            }
+        }
+
         let width = store.activeSessionID != nil ? panelSizeStore.expandedWidth : panelSizeStore.collapsedWidth
         let panelEdge = screenConfig.panelEdge(for: screen)
 
@@ -344,29 +355,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         panel.appearance = resolvedAppearance()
         panel.setSwiftUIContent(drawerView)
 
-        panel.onDismiss = { [weak self] in
-            self?.dismissDrawer()
-        }
-
-        drawerPanel = panel
         store.isPanelVisible = true
-        panel.slideIn(on: screen, width: width, edge: panelEdge) {
-            // After the slide-in animation completes the panel is fully on-screen and
-            // its CAContext is stable. Force a redraw so the persistent terminal views
-            // (re-parented into this fresh panel) flush their cached layer contents
-            // and draw into the new window. Without this, SwiftTerm can render as a
-            // solid background color (looks black) until the user clicks, because
-            // SwiftTerm only dirties itself inside setFrameSize / mouse events and the
-            // re-parent often lands on identical bounds across screens.
-            TerminalManager.shared.redrawAllTerminals()
-        }
+        panel.slideIn(on: screen, width: width, edge: panelEdge)
     }
 
     private func dismissDrawer() {
         store.isPanelVisible = false
-        let panel = drawerPanel
-        drawerPanel = nil
-        panel?.slideOut { [weak self] in
+        isPanelTransitioning = true
+        drawerPanel?.slideOut { [weak self] in
+            self?.isPanelTransitioning = false
             self?.store.clearSessionStatuses()
         }
     }
@@ -374,8 +371,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func reloadDrawerIfVisible() {
         guard let panel = drawerPanel, panel.isVisible else { return }
         let currentWidth = panel.frame.width
+        isPanelTransitioning = true
         panel.slideOut { [weak self] in
-            self?.drawerPanel = nil
+            self?.isPanelTransitioning = false
             self?.showDrawer()
             if let screen = self?.screenForDrawer, let panel = self?.drawerPanel {
                 panel.setWidth(currentWidth, on: screen)

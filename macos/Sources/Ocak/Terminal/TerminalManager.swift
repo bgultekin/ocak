@@ -86,31 +86,6 @@ final class TerminalManager {
         }
     }
 
-    /// Force every persistent terminal view to redraw. Used after the drawer finishes
-    /// sliding in on a new panel/screen: SwiftTerm only marks itself dirty inside
-    /// `setFrameSize` / mouse events, so when the view is re-parented into a fresh
-    /// window with unchanged final bounds, the CALayer keeps its stale backing store
-    /// and the terminal renders as a solid background color (looks black) until the
-    /// user clicks. We mark all rows dirty in SwiftTerm's buffer (so `draw()` actually
-    /// paints content and not just background), force a `setFrameSize` round-trip
-    /// (since AutoLayout may settle on identical bounds and skip it), and invalidate
-    /// the view to schedule the draw pass.
-    func redrawAllTerminals() {
-        for (_, termView) in terminals {
-            forceRedraw(termView)
-        }
-    }
-
-    private func forceRedraw(_ termView: OcakTerminalView) {
-        let term = termView.getTerminal()
-        term.refresh(startRow: 0, endRow: term.rows - 1)
-        let size = termView.frame.size
-        if size.width > 0, size.height > 0 {
-            termView.setFrameSize(size)
-        }
-        termView.needsDisplay = true
-    }
-
     // MARK: - Private
 
     private static func historyFilePath(for sessionID: UUID) -> String {
