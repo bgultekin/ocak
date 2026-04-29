@@ -133,11 +133,10 @@ final class UpdateService: NSObject {
 
     private func applyAutoUpdatePreference() {
         guard let updater = updaterController?.updater else { return }
-        // We never let Sparkle download silently — a menu-bar app rarely quits,
-        // so the queued install would never fire. The toggle only controls
-        // whether Sparkle runs its own scheduled background check, which we
-        // pair with our periodic info-only check.
-        updater.automaticallyChecksForUpdates = isAutoUpdateEnabled
+        // Disable Sparkle's own scheduler entirely — it can surface UI prompts
+        // we don't control. Our timer (rescheduleTimerIfNeeded) drives all
+        // periodic info-only checks instead.
+        updater.automaticallyChecksForUpdates = false
         updater.automaticallyDownloadsUpdates = false
         rescheduleTimerIfNeeded()
     }
