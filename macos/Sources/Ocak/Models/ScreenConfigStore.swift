@@ -10,6 +10,7 @@ final class ScreenConfigStore {
 
     private static let storageKey = "ocak.selectedScreenIDs"
     private static let edgeStorageKey = "ocak.panelEdges"
+    private static let lastDrawerScreenKey = "ocak.lastDrawerScreen"
 
     /// Persisted set of selected screen localizedName values.
     private(set) var selectedScreenNames: Set<String>
@@ -38,6 +39,16 @@ final class ScreenConfigStore {
     /// The primary active screen (first selected, or first available if none selected).
     var primaryActiveScreen: NSScreen? {
         activeScreens.first
+    }
+
+    /// The last screen on which the drawer was shown, if it's still connected and active.
+    var lastDrawerScreen: NSScreen? {
+        guard let key = UserDefaults.standard.string(forKey: Self.lastDrawerScreenKey) else { return nil }
+        return activeScreens.first { $0.stableKey == key }
+    }
+
+    func saveLastDrawerScreen(_ screen: NSScreen) {
+        UserDefaults.standard.set(screen.stableKey, forKey: Self.lastDrawerScreenKey)
     }
 
     /// Whether a specific screen is in the active set.

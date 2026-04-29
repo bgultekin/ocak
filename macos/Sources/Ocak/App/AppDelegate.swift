@@ -300,10 +300,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func showDrawer() {
-        guard let screen = hoverScreen ?? screenForCurrentMouse() ?? screenConfig.primaryActiveScreen else { return }
+        guard let screen = hoverScreen ?? screenForCurrentMouse() ?? screenConfig.lastDrawerScreen ?? screenConfig.primaryActiveScreen else { return }
         if store.isPanelVisible, drawerPanel?.isVisible == true { return }
 
         screenForDrawer = screen
+        screenConfig.saveLastDrawerScreen(screen)
         panelSizeStore.load(for: screen)
 
         let panel = DrawerPanel()
