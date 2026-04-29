@@ -11,11 +11,11 @@
 
 **A slide-out terminal drawer for managing AI coding terminals on macOS.**
 
-![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-blue)
-![Swift](https://img.shields.io/badge/Swift-5.9-orange)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-early-yellow)
-![GitHub Release](https://img.shields.io/github/v/release/bgultekin/ocak)
+[![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-blue)](https://github.com/bgultekin/ocak?tab=MIT-1-ov-file#readme)
+[![Swift](https://img.shields.io/badge/Swift-5.9-orange)](#)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/bgultekin/ocak?tab=MIT-1-ov-file#readme)
+[![Status](https://img.shields.io/badge/status-early-yellow)](#)
+[![GitHub Release](https://img.shields.io/github/v/release/bgultekin/ocak)](https://github.com/bgultekin/ocak/releases/latest)
 
 
 <sub>Made with tokens 🤖, no love included 💔</sub>
@@ -109,6 +109,11 @@ Both agents report live status through their respective plugin systems — Ocak 
 ```bash
 git clone https://github.com/bgultekin/ocak.git
 cd ocak/macos
+
+./scripts/build-macos-app.sh
+
+# or
+
 swift build -c release
 swift run -c release
 ```
