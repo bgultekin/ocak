@@ -18,6 +18,7 @@
 ![GitHub Release](https://img.shields.io/github/v/release/bgultekin/ocak)
 
 
+<sub>Made with tokens 🤖, no love included 💔</sub>
 
 </div>
 
@@ -53,6 +54,19 @@ Prefer to build it yourself? See [Build from source](#build-from-source) below.
 ## Demo Video
 
 https://github.com/user-attachments/assets/da23a5cf-93c2-4eb4-8a13-8495b46a1f4e
+
+---
+
+## Supported Agents
+
+Ocak works with any shell command, but has first-class status tracking for:
+
+| Agent | Status tracking | Setup |
+|---|---|---|
+| **[Claude Code](https://claude.ai/code)** | Working / waiting for input / done, via Claude Code hooks | One-click install from Settings → Hooks |
+| **[OpenCode](https://opencode.ai)** | Working / waiting for input / done, via OpenCode plugin | One-click install from Settings → Hooks |
+
+Both agents report live status through their respective plugin systems — Ocak shows at a glance which terminal is busy, waiting for your input, or idle. Any other CLI tool runs fine as a plain terminal without status badges.
 
 ## Features
 
