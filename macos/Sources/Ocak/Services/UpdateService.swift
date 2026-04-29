@@ -12,11 +12,17 @@ struct AvailableUpdate: Equatable {
 
 /// Drives Sparkle-based update checks and publishes state for the in-app UI.
 ///
-/// Manual mode (default): silent background check via `checkForUpdateInformation()`.
-/// A found update is surfaced through `availableUpdate` so `UpdateAvailableBox` can render.
-/// Clicking "Update" in the box triggers Sparkle's standard install flow.
+/// Ocak is a menu-bar accessory app that rarely quits, so Sparkle's default
+/// "download silently and install on quit" behavior is unreliable here.
+/// Instead we always run silent info-only checks and surface found updates
+/// through `availableUpdate` so `UpdateAvailableBox` can render in the drawer.
+/// The actual download + relaunch only happens when the user clicks "Update"
+/// in the banner (or "Check for Updates" in the menu), at which point we hand
+/// off to Sparkle's standard user-driver flow.
 ///
-/// Auto mode: Sparkle's built-in automatic check + download handles everything.
+/// The auto-update toggle controls whether we also run periodic background
+/// info checks while the app is running — without it, the only checks are
+/// on launch and when the user explicitly asks.
 @MainActor
 @Observable
 final class UpdateService: NSObject {
@@ -24,6 +30,7 @@ final class UpdateService: NSObject {
 
     private static let autoUpdateKey = "ocak.autoUpdateEnabled"
     private static let skippedVersionKey = "ocak.skippedUpdateVersion"
+    private static let periodicCheckInterval: TimeInterval = 6 * 60 * 60
 
     private(set) var availableUpdate: AvailableUpdate?
     private(set) var lastCheckDate: Date?
@@ -47,6 +54,7 @@ final class UpdateService: NSObject {
     private var snoozedThisSession = false
 
     private var updaterController: SPUStandardUpdaterController?
+    private var periodicCheckTimer: Timer?
 
     override private init() {
         self.isAutoUpdateEnabled = UserDefaults.standard.bool(forKey: Self.autoUpdateKey)
@@ -62,25 +70,23 @@ final class UpdateService: NSObject {
 
     // MARK: - Public API
 
-    /// Called once on app launch. Performs a silent background check (manual mode)
-    /// or a full check (auto mode).
+    /// Called once on app launch. Always runs a silent info-only check and,
+    /// if auto-update is enabled, schedules periodic re-checks.
     func checkOnLaunch() {
-        guard let updater = updaterController?.updater else { return }
-        if isAutoUpdateEnabled {
-            updater.checkForUpdatesInBackground()
-        } else {
-            isCheckingForUpdates = true
-            updater.checkForUpdateInformation()
-        }
+        runSilentCheck()
+        rescheduleTimerIfNeeded()
     }
 
-    /// User-initiated "Check for updates…" button in Settings.
+    /// User-initiated "Check for updates…" button in Settings or menu bar.
+    /// Uses Sparkle's standard user driver, which surfaces progress and errors.
     func checkNow() {
         guard let controller = updaterController else { return }
         controller.checkForUpdates(nil)
     }
 
-    /// User clicked "Update" in the session-list box. Hand off to Sparkle's install flow.
+    /// User clicked "Update" in the session-list box. Hand off to Sparkle's
+    /// standard install flow. Sparkle will re-fetch the appcast, but for the
+    /// same update we already showed, then download + prompt for relaunch.
     func installUpdateNow() {
         guard let controller = updaterController else { return }
         availableUpdate = nil
@@ -127,8 +133,32 @@ final class UpdateService: NSObject {
 
     private func applyAutoUpdatePreference() {
         guard let updater = updaterController?.updater else { return }
-        updater.automaticallyChecksForUpdates = isAutoUpdateEnabled
-        updater.automaticallyDownloadsUpdates = isAutoUpdateEnabled
+        // Disable Sparkle's own scheduler entirely — it can surface UI prompts
+        // we don't control. Our timer (rescheduleTimerIfNeeded) drives all
+        // periodic info-only checks instead.
+        updater.automaticallyChecksForUpdates = false
+        updater.automaticallyDownloadsUpdates = false
+        rescheduleTimerIfNeeded()
+    }
+
+    private func runSilentCheck() {
+        guard let updater = updaterController?.updater else { return }
+        guard !isCheckingForUpdates else { return }
+        isCheckingForUpdates = true
+        updater.checkForUpdateInformation()
+    }
+
+    private func rescheduleTimerIfNeeded() {
+        periodicCheckTimer?.invalidate()
+        periodicCheckTimer = nil
+        guard isAutoUpdateEnabled else { return }
+        let timer = Timer.scheduledTimer(
+            withTimeInterval: Self.periodicCheckInterval,
+            repeats: true
+        ) { [weak self] _ in
+            Task { @MainActor in self?.runSilentCheck() }
+        }
+        periodicCheckTimer = timer
     }
 }
 
@@ -143,10 +173,6 @@ extension UpdateService: SPUUpdaterDelegate {
             self.isCheckingForUpdates = false
             self.lastCheckDate = Date()
 
-            if self.isAutoUpdateEnabled {
-                // Sparkle's own machinery will download + install; we stay quiet.
-                return
-            }
             if self.snoozedThisSession { return }
             if let skipped = self.skippedVersion, skipped == version { return }
 
@@ -169,6 +195,7 @@ extension UpdateService: SPUUpdaterDelegate {
     nonisolated func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
         DispatchQueue.main.async { [weak self] in
             self?.isCheckingForUpdates = false
+            self?.lastCheckDate = Date()
         }
     }
 }
