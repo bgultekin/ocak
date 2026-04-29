@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private var ribbonPanels: [NSPanel] = []
     private var drawerPanel: DrawerPanel?
+    private var isPanelTransitioning = false
     private let store = SessionStore()
     private var hookServer: HookServer?
 
@@ -301,6 +302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func showDrawer() {
         guard let screen = hoverScreen ?? screenForCurrentMouse() ?? screenConfig.primaryActiveScreen else { return }
         if store.isPanelVisible, drawerPanel?.isVisible == true { return }
+        if isPanelTransitioning { return }
 
         screenForDrawer = screen
         panelSizeStore.load(for: screen)
@@ -359,7 +361,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func dismissDrawer() {
         store.isPanelVisible = false
+        isPanelTransitioning = true
         drawerPanel?.slideOut { [weak self] in
+            self?.isPanelTransitioning = false
             self?.store.clearSessionStatuses()
         }
     }
@@ -367,7 +371,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func reloadDrawerIfVisible() {
         guard let panel = drawerPanel, panel.isVisible else { return }
         let currentWidth = panel.frame.width
+        isPanelTransitioning = true
         panel.slideOut { [weak self] in
+            self?.isPanelTransitioning = false
             self?.showDrawer()
             if let screen = self?.screenForDrawer, let panel = self?.drawerPanel {
                 panel.setWidth(currentWidth, on: screen)
