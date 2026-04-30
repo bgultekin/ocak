@@ -1,10 +1,14 @@
-.PHONY: build run run-watch lint test reset-state
+.PHONY: build build-wrapped run run-watch lint test reset-state
 
 build:
 	swift build --package-path macos
 
 run:
 	swift run --package-path macos
+
+build-wrapped:
+	swift build --package-path macos
+	@./scripts/wrap-debug-bundle.sh
 
 run-watch:
 	./scripts/run-macos-app-and-watch.sh

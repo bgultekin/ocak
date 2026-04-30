@@ -180,8 +180,9 @@ for b in "${SPM_BUNDLES[@]}"; do
     mv "$b" "$SIGN_HOLD/"
 done
 
-echo "Adhoc-signing app bundle..."
-codesign --force --sign - "$APP_BUNDLE"
+SIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
+echo "Signing app bundle with: $SIGN_IDENTITY"
+codesign --force --sign "$SIGN_IDENTITY" --identifier "com.ocak.app" "$APP_BUNDLE"
 
 restore_spm_bundles
 trap - EXIT
