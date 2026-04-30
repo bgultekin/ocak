@@ -6,6 +6,10 @@ build:
 run:
 	swift run --package-path macos
 
+build-wrapped:
+	swift build --package-path macos
+	@./scripts/wrap-debug-bundle.sh
+
 run-watch:
 	./scripts/run-macos-app-and-watch.sh
 

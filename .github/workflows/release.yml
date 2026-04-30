@@ -24,6 +24,24 @@ jobs:
         with:
           xcode-version: '16.2'
 
+      - name: Install signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          echo -n "$CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          security create-keychain -p "" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          curl -sO https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer
+          security import AppleWWDRCAG3.cer -k "$KEYCHAIN_PATH"
+          rm -f AppleWWDRCAG3.cer
+
       - name: Resolve version
         id: version
         run: |
@@ -44,6 +62,7 @@ jobs:
           APP_BUILD: ${{ steps.version.outputs.build_number }}
           SPARKLE_PUBLIC_KEY: ${{ vars.SPARKLE_PUBLIC_KEY }}
           SPARKLE_FEED_URL: ${{ vars.SPARKLE_FEED_URL }}
+          CODESIGN_IDENTITY: "Apple Development"
         run: ./scripts/build-macos-app.sh
 
       - name: Sign DMG and generate appcast.xml
@@ -83,3 +102,7 @@ jobs:
             --title "Ocak $VERSION" \
             "${NOTES_ARGS[@]}" \
             "${ASSETS[@]}"
+
+      - name: Clean up keychain
+        if: always()
+        run: security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true

@@ -53,7 +53,7 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 while true; do
-  ( cd "$MACOS_DIR" && exec swift run ) &
+  ( cd "$MACOS_DIR" && swift build && "$REPO_ROOT/scripts/wrap-debug-bundle.sh" && exec .build/debug/Ocak.app/Contents/MacOS/Ocak ) &
   swift_pid=$!
 
   (
