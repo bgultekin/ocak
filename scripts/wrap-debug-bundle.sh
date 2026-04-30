@@ -69,7 +69,6 @@ codesign --force --sign "Apple Development" "$APP_BUNDLE" 2>/dev/null || \
 # Copy SPM resource bundles so Bundle.module resolves correctly at runtime
 shopt -s nullglob
 for bundle in "$BUILD_DIR"/*_*.bundle; do
-  [[ "$(basename "$bundle")" == "Ocak.app" ]] && continue
   cp -Rf "$bundle" "$APP_BUNDLE/"
 done
 shopt -u nullglob

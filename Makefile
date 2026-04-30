@@ -1,4 +1,4 @@
-.PHONY: build run run-watch lint test reset-state
+.PHONY: build build-wrapped run run-watch lint test reset-state
 
 build:
 	swift build --package-path macos
