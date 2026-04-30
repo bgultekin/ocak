@@ -23,13 +23,13 @@ struct UpdateAvailableBox: View {
                     .foregroundColor(OcakTheme.labelSecondary)
                     .fixedSize(horizontal: false, vertical: true)
 
-                if let url = update.releaseNotesURL {
-                    Button("View release notes") {
-                        NSWorkspace.shared.open(url)
-                    }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 11))
-                    .foregroundColor(OcakTheme.statusBlue)
+                if let notes = update.releaseNotes, !notes.isEmpty {
+                    let attributed = (try? AttributedString(markdown: notes, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(notes)
+                    Text(attributed)
+                        .font(.system(size: 11))
+                        .foregroundColor(OcakTheme.labelSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(20)
                 }
 
                 HStack(spacing: 8) {

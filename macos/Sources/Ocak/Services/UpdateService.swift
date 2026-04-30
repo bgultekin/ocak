@@ -8,6 +8,7 @@ struct AvailableUpdate: Equatable {
     let version: String
     let currentVersion: String
     let releaseNotesURL: URL?
+    let releaseNotes: String?
 }
 
 /// Drives Sparkle-based update checks and publishes state for the in-app UI.
@@ -168,7 +169,7 @@ extension UpdateService: SPUUpdaterDelegate {
     nonisolated func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
         let version = item.displayVersionString
         let notesURL = item.releaseNotesURL
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
             self.isCheckingForUpdates = false
             self.lastCheckDate = Date()
@@ -176,11 +177,34 @@ extension UpdateService: SPUUpdaterDelegate {
             if self.snoozedThisSession { return }
             if let skipped = self.skippedVersion, skipped == version { return }
 
+            let releaseNotes = await Self.fetchReleaseNotes(from: notesURL)
             self.availableUpdate = AvailableUpdate(
                 version: version,
                 currentVersion: Self.currentVersion,
-                releaseNotesURL: notesURL
+                releaseNotesURL: notesURL,
+                releaseNotes: releaseNotes
             )
+        }
+    }
+
+    private static func fetchReleaseNotes(from releasePageURL: URL?) async -> String? {
+        guard let releasePageURL else { return nil }
+        // Convert https://github.com/{owner}/{repo}/releases/tag/{tag}
+        //      to https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}
+        let parts = releasePageURL.pathComponents.filter { $0 != "/" }
+        guard parts.count >= 5,
+              parts[2] == "releases",
+              parts[3] == "tag" else { return nil }
+        let owner = parts[0], repo = parts[1], tag = parts[4]
+        guard let apiURL = URL(string: "https://api.github.com/repos/\(owner)/\(repo)/releases/tags/\(tag)") else { return nil }
+        var request = URLRequest(url: apiURL)
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.setValue("2022-11-28", forHTTPHeaderField: "X-GitHub-Api-Version")
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            return try JSONDecoder().decode(GitHubRelease.self, from: data).body
+        } catch {
+            return nil
         }
     }
 
@@ -198,4 +222,8 @@ extension UpdateService: SPUUpdaterDelegate {
             self?.lastCheckDate = Date()
         }
     }
+}
+
+private struct GitHubRelease: Decodable {
+    let body: String?
 }
