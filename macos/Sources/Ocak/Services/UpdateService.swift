@@ -177,13 +177,21 @@ extension UpdateService: SPUUpdaterDelegate {
             if self.snoozedThisSession { return }
             if let skipped = self.skippedVersion, skipped == version { return }
 
-            let releaseNotes = await Self.fetchReleaseNotes(from: notesURL)
             self.availableUpdate = AvailableUpdate(
                 version: version,
                 currentVersion: Self.currentVersion,
                 releaseNotesURL: notesURL,
-                releaseNotes: releaseNotes
+                releaseNotes: nil
             )
+            let releaseNotes = await Self.fetchReleaseNotes(from: notesURL)
+            if releaseNotes != nil, self.availableUpdate?.version == version {
+                self.availableUpdate = AvailableUpdate(
+                    version: version,
+                    currentVersion: Self.currentVersion,
+                    releaseNotesURL: notesURL,
+                    releaseNotes: releaseNotes
+                )
+            }
         }
     }
 
