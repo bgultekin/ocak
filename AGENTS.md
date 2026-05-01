@@ -91,6 +91,7 @@ The VS Code button also appears in the collapsed header state (next to the termi
 - Colors are centralized in `Theme/Colors.swift`.
 - Tests use **Swift Testing** (`import Testing`, `@Test`, `#expect`) — not XCTest.
 - Tests **cannot import the executable target** directly. Types needed for testing are duplicated locally in test files.
+- All new features should support both light and dark themes.
 
 ## Approach
 - Think before acting. Read existing files before writing code.

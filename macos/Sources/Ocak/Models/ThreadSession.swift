@@ -48,6 +48,8 @@ struct ThreadSession: Identifiable, Codable {
     /// again. Persisted so we don't re-rename across app restarts for the same agent
     /// session.
     var lastAutoNamedAgentSessionId: String?
+    /// True when the user has manually marked this terminal. Persisted.
+    var isMarked: Bool = false
     /// Runtime-only: true when the AI agent process is detected as a descendant of this session's shell.
     /// Not persisted — resets to false on restore. Excluded from CodingKeys intentionally.
     var isAgentRunning: Bool = false
@@ -67,7 +69,7 @@ struct ThreadSession: Identifiable, Codable {
     var agentSessionActive: Bool = false
     enum CodingKeys: String, CodingKey {
         case id, name, workingDirectory, groupID, aiTool, status, command, order, createdAt,
-             hasManualName, lastAutoNamedAgentSessionId
+             hasManualName, lastAutoNamedAgentSessionId, isMarked
     }
 
     init(
@@ -110,6 +112,7 @@ struct ThreadSession: Identifiable, Codable {
         hasManualName = try c.decodeIfPresent(Bool.self, forKey: .hasManualName) ?? true
         lastAutoNamedAgentSessionId = try c.decodeIfPresent(
             String.self, forKey: .lastAutoNamedAgentSessionId)
+        isMarked = try c.decodeIfPresent(Bool.self, forKey: .isMarked) ?? false
     }
 
     var shortPath: String {
