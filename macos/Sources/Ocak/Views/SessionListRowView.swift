@@ -8,6 +8,7 @@ struct SessionListRowView: View {
     var onSelect: () -> Void
     var onRename: (String) -> Void
     var onDelete: () -> Void
+    var onMark: () -> Void
 
     @State private var isRenaming = false
     @State private var draftName = ""
@@ -49,7 +50,21 @@ struct SessionListRowView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(isSelected ? OcakTheme.activeTint : Color.clear)
+        .background {
+            ZStack {
+                if session.isMarked {
+                    GeometryReader { geo in
+                        let lineHeight = geo.size.height * 0.5
+                        let yOffset = (geo.size.height - lineHeight) / 2
+                        OcakTheme.activeBorder
+                            .frame(width: 3, height: lineHeight)
+                            .cornerRadius(2)
+                            .position(x: 2, y: yOffset + lineHeight / 2)
+                    }
+                }
+                isSelected ? OcakTheme.activeTint : Color.clear
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -58,6 +73,7 @@ struct SessionListRowView: View {
         .contentShape(Rectangle())
         .onTapGesture { onSelect() }
         .contextMenu {
+            Button(session.isMarked ? "Unmark" : "Mark") { onMark() }
             Button("Rename") { startRename() }
             Divider()
             Button("Close", role: .destructive) { onDelete() }

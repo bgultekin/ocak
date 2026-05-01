@@ -831,7 +831,8 @@ struct SessionRowItem: View {
                 isSelected: session.id == activeSessionID,
                 onSelect: { onSelect(session.id) },
                 onRename: { newName in onRename(session.id, newName) },
-                onDelete: { onDelete(session.id) }
+                onDelete: { onDelete(session.id) },
+                onMark: { store.toggleMark(session.id) }
             )
             .id(session.id)
             .onDrag {

@@ -236,6 +236,13 @@ final class SessionStore {
         activeSessionID = id
     }
 
+    func toggleMark(_ id: UUID) {
+        if let idx = sessions.firstIndex(where: { $0.id == id }) {
+            sessions[idx].isMarked.toggle()
+            save()
+        }
+    }
+
     func renameSession(_ id: UUID, name: String) {
         if let idx = sessions.firstIndex(where: { $0.id == id }) {
             sessions[idx].name = name
