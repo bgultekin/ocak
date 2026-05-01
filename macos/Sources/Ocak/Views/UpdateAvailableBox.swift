@@ -45,6 +45,13 @@ struct UpdateAvailableBox: View {
 
                     Spacer()
 
+                    if let url = update.releaseNotesURL {
+                        Button("View Release") { NSWorkspace.shared.open(url) }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 11))
+                            .foregroundColor(OcakTheme.statusBlue)
+                    }
+
                     Button(action: { service.installUpdateNow() }) {
                         Text("Update")
                     }
