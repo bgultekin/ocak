@@ -35,10 +35,12 @@ final class TerminalManager {
         )
 
         configureAppearance(termView)
+        // Read prior history BEFORE configuring the logger, which opens the file for writing.
+        let historyData = TerminalHistoryLogger.readLog(for: sessionID)
         termView.configureHistoryLogging(sessionID: sessionID)
 
         // Defer history replay until the view has proper dimensions (layout())
-        if let historyData = TerminalHistoryLogger.readLog(for: sessionID) {
+        if let historyData {
             termView.pendingHistoryReplay = historyData
         }
 

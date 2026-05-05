@@ -44,7 +44,7 @@ final class OcakTerminalView: LocalProcessTerminalView {
             feed(byteArray: mouseReset[...])
             suppressingResponses = false
             let cols = terminal.cols
-            let separator = "\u{1B}[90m" + String(repeating: "─", count: cols) + "\u{1B}[0m\r\n"
+            let separator = "\r\n\u{1B}[90m" + String(repeating: "─", count: cols) + "\u{1B}[0m\r\n"
             feed(text: separator)
         }
     }
