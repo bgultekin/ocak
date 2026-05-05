@@ -84,7 +84,9 @@ final class TerminalHistoryLogger {
     }
 
     private func openFile() {
-        FileManager.default.createFile(atPath: fileURL.path, contents: nil)
+        if !FileManager.default.fileExists(atPath: fileURL.path) {
+            FileManager.default.createFile(atPath: fileURL.path, contents: nil)
+        }
         fileHandle = FileHandle(forWritingAtPath: fileURL.path)
         fileHandle?.seekToEndOfFile()
         currentFileSize = fileHandle?.offsetInFile ?? 0
