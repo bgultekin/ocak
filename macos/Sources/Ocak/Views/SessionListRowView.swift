@@ -16,6 +16,7 @@ struct SessionListRowView: View {
     @State private var outsideClickMonitor: Any?
     @State private var displayedName: String = ""
     @State private var typingTask: Task<Void, Never>?
+    @State private var userJustRenamed = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -87,7 +88,12 @@ struct SessionListRowView: View {
                 displayedName = newName
                 return
             }
-            animateTyping(newName)
+            if userJustRenamed {
+                userJustRenamed = false
+                displayedName = newName
+            } else {
+                animateTyping(newName)
+            }
         }
         .onDisappear {
             removeOutsideClickMonitor()
@@ -152,6 +158,7 @@ struct SessionListRowView: View {
         let trimmed = draftName.trimmingCharacters(in: .whitespaces)
         isRenaming = false
         renameFieldFocused = false
+        userJustRenamed = true
         onRename(trimmed.isEmpty ? session.name : trimmed)
     }
 
