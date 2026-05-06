@@ -3,8 +3,13 @@ import SwiftUI
 
 /// A session row with status badge, glowing dot, and active tint background.
 struct SessionListRowView: View {
+    /// Approximate visual row height (vertical padding 7×2 + ~18pt name text).
+    /// Used by drag/drop logic to compute the insertion-line midpoint without a layout read.
+    static let approximateRowHeight: CGFloat = 32
+
     let session: ThreadSession
     let isSelected: Bool
+    var isDragging: Bool = false
     var onSelect: () -> Void
     var onRename: (String) -> Void
     var onDelete: () -> Void
@@ -67,6 +72,7 @@ struct SessionListRowView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(isSelected ? OcakTheme.activeBorder : Color.clear, lineWidth: 1)
         )
+        .opacity(isDragging ? 0.35 : 1.0)
         .contentShape(Rectangle())
         .onTapGesture { onSelect() }
         .contextMenu {
