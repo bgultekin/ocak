@@ -5,6 +5,7 @@ import SwiftUI
 struct SessionListRowView: View {
     let session: ThreadSession
     let isSelected: Bool
+    var isDragging: Bool = false
     var onSelect: () -> Void
     var onRename: (String) -> Void
     var onDelete: () -> Void
@@ -67,6 +68,7 @@ struct SessionListRowView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(isSelected ? OcakTheme.activeBorder : Color.clear, lineWidth: 1)
         )
+        .opacity(isDragging ? 0.35 : 1.0)
         .contentShape(Rectangle())
         .onTapGesture { onSelect() }
         .contextMenu {
