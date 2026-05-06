@@ -3,6 +3,10 @@ import SwiftUI
 
 /// A session row with status badge, glowing dot, and active tint background.
 struct SessionListRowView: View {
+    /// Approximate visual row height (vertical padding 7×2 + ~18pt name text).
+    /// Used by drag/drop logic to compute the insertion-line midpoint without a layout read.
+    static let approximateRowHeight: CGFloat = 32
+
     let session: ThreadSession
     let isSelected: Bool
     var isDragging: Bool = false

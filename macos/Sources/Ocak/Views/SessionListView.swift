@@ -46,7 +46,6 @@ struct SessionListView: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var draggedSession: ThreadSession?
-    @State private var dropTargetGroupID: UUID?
     @State private var dropIndicator: DropIndicator?
     @State private var isHeaderNewGroupHovered = false
 
@@ -90,12 +89,10 @@ struct SessionListView: View {
                                 onSessionDroppedOnGroup: { session, sourceGroupID in
                                     let targetCount = item.sessions.count
                                     store.moveSession(session.id, toGroup: item.group.id, at: targetCount)
-                                    dropTargetGroupID = nil
                                     dropIndicator = nil
                                     draggedSession = nil
                                 },
                                 draggedSession: $draggedSession,
-                                dropTargetGroupID: $dropTargetGroupID,
                                 dropIndicator: $dropIndicator,
                                 store: store
                             )
@@ -181,7 +178,6 @@ struct GroupListItem: View {
     let isDropTarget: Bool
     var onSessionDroppedOnGroup: (ThreadSession, UUID) -> Void
     @Binding var draggedSession: ThreadSession?
-    @Binding var dropTargetGroupID: UUID?
     @Binding var dropIndicator: DropIndicator?
     let store: SessionStore
 
@@ -199,7 +195,6 @@ struct GroupListItem: View {
             isDropTarget: isDropTarget,
             onSessionDroppedOnGroup: onSessionDroppedOnGroup,
             draggedSession: $draggedSession,
-            dropTargetGroupID: $dropTargetGroupID,
             dropIndicator: $dropIndicator,
             store: store
         )
@@ -209,7 +204,6 @@ struct GroupListItem: View {
                 groupID: group.id,
                 sessionCount: sessions.count,
                 draggedSession: $draggedSession,
-                dropTargetGroupID: $dropTargetGroupID,
                 dropIndicator: $dropIndicator,
                 onSessionDrop: { session in
                     onSessionDroppedOnGroup(session, session.groupID)
@@ -226,39 +220,47 @@ struct GroupDropTargetDelegate: DropDelegate {
     let groupID: UUID
     let sessionCount: Int
     @Binding var draggedSession: ThreadSession?
-    @Binding var dropTargetGroupID: UUID?
     @Binding var dropIndicator: DropIndicator?
     let onSessionDrop: (ThreadSession) -> Void
     var onExpandGroup: (() -> Void)?
 
+    /// True when the dragged session already sits at the trailing slot of this group —
+    /// dropping here would be a no-op move that still triggers a `save()` in the store.
+    private func isNoOpTrailingDrop(_ session: ThreadSession) -> Bool {
+        session.groupID == groupID && session.order == sessionCount - 1
+    }
+
     func performDrop(info: DropInfo) -> Bool {
-        if let session = draggedSession {
-            onSessionDrop(session)
+        guard let session = draggedSession else {
             dropIndicator = nil
-            dropTargetGroupID = nil
-            return true
+            return false
         }
+        if isNoOpTrailingDrop(session) {
+            dropIndicator = nil
+            draggedSession = nil
+            return false
+        }
+        onSessionDrop(session)
         dropIndicator = nil
-        dropTargetGroupID = nil
-        return false
+        return true
     }
 
     func dropEntered(info: DropInfo) {
-        dropTargetGroupID = groupID
         onExpandGroup?()
+        if let session = draggedSession, isNoOpTrailingDrop(session) { return }
         withAnimation(.easeInOut(duration: 0.12)) {
             dropIndicator = DropIndicator(groupID: groupID, index: sessionCount)
         }
     }
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        DropProposal(operation: .move)
+        if let session = draggedSession, isNoOpTrailingDrop(session) {
+            return DropProposal(operation: .forbidden)
+        }
+        return DropProposal(operation: .move)
     }
 
     func dropExited(info: DropInfo) {
-        if dropTargetGroupID == groupID {
-            dropTargetGroupID = nil
-        }
         if dropIndicator?.groupID == groupID {
             withAnimation(.easeInOut(duration: 0.12)) {
                 dropIndicator = nil
@@ -314,7 +316,6 @@ struct SessionGroupListView: View {
     let isDropTarget: Bool
     var onSessionDroppedOnGroup: (ThreadSession, UUID) -> Void
     @Binding var draggedSession: ThreadSession?
-    @Binding var dropTargetGroupID: UUID?
     @Binding var dropIndicator: DropIndicator?
     let store: SessionStore
 
@@ -619,7 +620,6 @@ struct SessionGroupListView: View {
                     onDelete: onDelete,
                     store: store,
                     draggedSession: $draggedSession,
-                    dropTargetGroupID: $dropTargetGroupID,
                     dropIndicator: $dropIndicator
                 )
                 .transition(.opacity)
@@ -836,7 +836,6 @@ struct SessionRowItem: View {
     var onDelete: (UUID) -> Void
     let store: SessionStore
     @Binding var draggedSession: ThreadSession?
-    @Binding var dropTargetGroupID: UUID?
     @Binding var dropIndicator: DropIndicator?
 
     var body: some View {
@@ -861,6 +860,21 @@ struct SessionRowItem: View {
                 .id(session.id)
                 .onDrag {
                     draggedSession = session
+                    // Watchdog: SwiftUI doesn't notify us when a drag ends without a successful
+                    // drop (forbidden drops, drops outside any zone), so the row would stay
+                    // dimmed and `draggedSession` would stay set. Poll the physical mouse
+                    // button and clear state once it's released.
+                    let sessionID = session.id
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 100_000_000)
+                        while NSEvent.pressedMouseButtons & 1 != 0 {
+                            try? await Task.sleep(nanoseconds: 50_000_000)
+                        }
+                        if draggedSession?.id == sessionID {
+                            draggedSession = nil
+                            dropIndicator = nil
+                        }
+                    }
                     return NSItemProvider(object: session.id.uuidString as NSString)
                 } preview: {
                     SessionDragPreview(session: session)
@@ -873,7 +887,6 @@ struct SessionRowItem: View {
                         sessions: sessions,
                         destinationIndex: index,
                         draggedSession: $draggedSession,
-                        dropTargetGroupID: $dropTargetGroupID,
                         dropIndicator: $dropIndicator,
                         onReorderInGroup: { draggedSession, destIndex in
                             store.reorderSessionInGroup(group.id, sessionID: draggedSession.id, to: destIndex)
@@ -898,13 +911,12 @@ struct SessionRowDropTargetDelegate: DropDelegate {
     let sessions: [ThreadSession]
     let destinationIndex: Int
     @Binding var draggedSession: ThreadSession?
-    @Binding var dropTargetGroupID: UUID?
     @Binding var dropIndicator: DropIndicator?
     let onReorderInGroup: (ThreadSession, Int) -> Void
     let onSessionDrop: (ThreadSession, Int) -> Void
 
-    private func computeInsertionIndex(info: DropInfo, rowHeight: CGFloat) -> Int {
-        info.location.y < rowHeight / 2 ? destinationIndex : destinationIndex + 1
+    private func computeInsertionIndex(info: DropInfo) -> Int {
+        info.location.y < SessionListRowView.approximateRowHeight / 2 ? destinationIndex : destinationIndex + 1
     }
 
     func performDrop(info: DropInfo) -> Bool {
@@ -912,8 +924,7 @@ struct SessionRowDropTargetDelegate: DropDelegate {
             dropIndicator = nil
             return false
         }
-        let rowHeight = CGFloat(32)
-        let insertionIndex = dropIndicator?.index ?? computeInsertionIndex(info: info, rowHeight: rowHeight)
+        let insertionIndex = dropIndicator?.index ?? computeInsertionIndex(info: info)
         dropIndicator = nil
 
         if session.groupID == groupID {
@@ -932,8 +943,7 @@ struct SessionRowDropTargetDelegate: DropDelegate {
 
     func dropUpdated(info: DropInfo) -> DropProposal? {
         guard let session = draggedSession else { return DropProposal(operation: .forbidden) }
-        let rowHeight = CGFloat(32)
-        let insertionIndex = computeInsertionIndex(info: info, rowHeight: rowHeight)
+        let insertionIndex = computeInsertionIndex(info: info)
 
         if session.groupID == groupID,
            let sourceIndex = sessions.firstIndex(where: { $0.id == session.id }),
@@ -948,16 +958,9 @@ struct SessionRowDropTargetDelegate: DropDelegate {
         return DropProposal(operation: .move)
     }
 
-    func dropEntered(info: DropInfo) {
-        dropTargetGroupID = groupID
-    }
-
     func dropExited(info: DropInfo) {
         if dropIndicator?.groupID == groupID {
             withAnimation(.easeInOut(duration: 0.12)) { dropIndicator = nil }
-        }
-        if dropTargetGroupID == groupID {
-            dropTargetGroupID = nil
         }
     }
 
