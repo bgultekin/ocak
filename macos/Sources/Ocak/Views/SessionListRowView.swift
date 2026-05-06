@@ -21,27 +21,23 @@ struct SessionListRowView: View {
         HStack(spacing: 10) {
             statusDot
 
-            VStack(alignment: .leading, spacing: 4) {
-                if isRenaming {
-                    TextField("Terminal name", text: $draftName)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(OcakTheme.labelPrimary)
-                        .focused($renameFieldFocused)
-                        .onSubmit { commitRename() }
-                        .onExitCommand { cancelRename() }
-                        .onChange(of: renameFieldFocused) { _, focused in
-                            if !focused { commitRename() }
-                        }
-                } else {
-                    Text(displayedName)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(OcakTheme.labelPrimary)
-                        .lineLimit(1)
-                        .onTapGesture(count: 2) { startRename() }
-                }
-
-                gitInfoLabel
+            if isRenaming {
+                TextField("Terminal name", text: $draftName)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(OcakTheme.labelPrimary)
+                    .focused($renameFieldFocused)
+                    .onSubmit { commitRename() }
+                    .onExitCommand { cancelRename() }
+                    .onChange(of: renameFieldFocused) { _, focused in
+                        if !focused { commitRename() }
+                    }
+            } else {
+                Text(displayedName)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(OcakTheme.labelPrimary)
+                    .lineLimit(1)
+                    .onTapGesture(count: 2) { startRename() }
             }
 
             Spacer()
@@ -49,7 +45,7 @@ struct SessionListRowView: View {
             statusBadge
         }
         .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.vertical, 7)
         .background {
             ZStack {
                 if session.isMarked {
@@ -99,22 +95,6 @@ struct SessionListRowView: View {
         }
     }
 
-    private var gitInfoLabel: some View {
-        let info = GitInfo.read(from: session.workingDirectory)
-        return HStack(spacing: 4) {
-            Image(systemName: "arrow.triangle.branch")
-                .font(.system(size: 9))
-            if info.branch != nil {
-                Text(info.displayText)
-            } else {
-                Text("no git")
-            }
-        }
-        .font(.system(size: 11))
-        .foregroundColor(OcakTheme.labelSecondary)
-        .lineLimit(1)
-    }
-
     private var statusDot: some View {
         let color = OcakTheme.statusColor(for: session.status)
         let glowColor: Color = (session.status == .working || session.status == .needs_input)
@@ -126,7 +106,6 @@ struct SessionListRowView: View {
             .foregroundColor(isSelected ? OcakTheme.activeIconColor : OcakTheme.sessionIconColor)
             .contentTransition(.symbolEffect(.replace))
             .shadow(color: glowColor, radius: 4)
-            .padding(.top, 2)
             .frame(width: 14, alignment: .center)
     }
 

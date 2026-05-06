@@ -1,7 +1,7 @@
 import Foundation
 
 /// Runs `claude -p` with the Haiku model to summarize a user prompt into a short
-/// terminal tab name (2–4 words). Results are delivered on the main queue.
+/// terminal tab name (3–5 words). Results are delivered on the main queue.
 enum TerminalNameSummarizer {
     /// Generate a short name for `prompt` and invoke `completion` on the main queue
     /// once finished. `completion` receives nil on any failure (missing `claude`,
@@ -23,7 +23,7 @@ enum TerminalNameSummarizer {
 
     private static let instruction = """
     Summarize the following user request as a short terminal tab name.
-    Respond with 2 to 4 words only. No quotes, no punctuation, no trailing period, \
+    Respond with 3 to 5 words only. No quotes, no punctuation, no trailing period, \
     no explanation — output nothing except the name itself.
 
     Request:
