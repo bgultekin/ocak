@@ -31,6 +31,7 @@ struct TerminalPaneView: View {
                         onDirectoryChange?(session.id, dir)
                     }
                 )
+                .padding(EdgeInsets(top: 4, leading: 8, bottom: 8, trailing: 8))
                 .background(OcakTheme.terminalBackground)
             }
             .clipShape(RoundedRectangle(cornerRadius: 12))

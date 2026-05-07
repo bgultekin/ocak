@@ -1089,7 +1089,6 @@ struct SessionRowDropTargetDelegate: DropDelegate {
     }
 }
 
-
 struct SessionDragPreview: View {
     let session: ThreadSession
 
