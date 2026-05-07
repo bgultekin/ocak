@@ -428,6 +428,14 @@ struct SessionGroupListView: View {
         .animation(.easeInOut(duration: 0.2), value: isEditingSettings)
         .animation(.easeInOut(duration: 0.2), value: group.isCollapsed)
         .animation(.easeInOut(duration: 0.15), value: isDropTarget)
+        .onChange(of: isRenamingGroup) { _, editing in
+            if editing {
+                installOutsideClickMonitor()
+            } else {
+                removeOutsideClickMonitor()
+            }
+        }
+        .onDisappear { removeOutsideClickMonitor() }
         .onHover { hovering in
             withAnimation(.easeInOut(duration: 0.15)) { isGroupHovered = hovering }
         }
@@ -490,14 +498,6 @@ struct SessionGroupListView: View {
                 newSessionButton
             }
         }
-        .onChange(of: isRenamingGroup) { _, editing in
-            if editing {
-                installOutsideClickMonitor()
-            } else {
-                removeOutsideClickMonitor()
-            }
-        }
-        .onDisappear { removeOutsideClickMonitor() }
     }
 
     @ViewBuilder private var draggableHeaderRow: some View {
@@ -1139,8 +1139,8 @@ private struct GroupNameTextField: NSViewRepresentable {
         let attrs = makeAttrs()
         tf.attributedStringValue = NSAttributedString(string: text, attributes: attrs)
 
-        let activate: (NSTextField) -> Void = { field in
-            guard field.window?.makeFirstResponder(field) == true else { return }
+        // Apply selection/typing attributes once the field editor exists.
+        let applyEditorAttrs: (NSTextField) -> Void = { field in
             if let editor = field.currentEditor() as? NSTextView {
                 editor.typingAttributes = attrs
                 if let storage = editor.textStorage, storage.length > 0 {
@@ -1149,14 +1149,48 @@ private struct GroupNameTextField: NSViewRepresentable {
                 editor.selectAll(nil)
             }
         }
-        DispatchQueue.main.async { activate(tf) }
-        // After a group drag-and-drop, AppKit's drag session teardown can reclaim
-        // first responder a few milliseconds later, evicting the text field. A second
-        // attempt after 120ms reliably wins because drag teardown is complete by then.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak tf] in
-            guard let tf, tf.window?.firstResponder !== tf,
-                  tf.window?.firstResponder !== tf.currentEditor() else { return }
-            activate(tf)
+        // Heavy reactivation: only used on retry paths after a drag teardown.
+        // After a SwiftUI .onDrag in this accessory app, system focus returns to
+        // whichever process was previously frontmost. The DrawerPanel can still claim
+        // key status within our process, but key events route to the frontmost app —
+        // so the field looks focused but receives nothing. Reactivate our process,
+        // clear any stuck editing session, then re-key and re-target the field.
+        // Note: endEditing(for:) can fire delegate callbacks (e.g. onCommit) on any
+        // currently-editing field, so we only invoke it on the recovery path.
+        let reactivate: (NSTextField) -> Void = { field in
+            NSApp.activate(ignoringOtherApps: true)
+            field.window?.endEditing(for: nil)
+            field.window?.makeFirstResponder(nil)
+            field.window?.makeKey()
+            field.window?.orderFrontRegardless()
+            guard field.window?.makeFirstResponder(field) == true else { return }
+            applyEditorAttrs(field)
+        }
+        // Initial path: in the common no-drag case, a plain makeFirstResponder is
+        // sufficient and avoids needlessly toggling app/window activation state.
+        DispatchQueue.main.async { [weak tf] in
+            guard let tf else { return }
+            if tf.window?.makeFirstResponder(tf) == true {
+                applyEditorAttrs(tf)
+            }
+        }
+        // Drag-session cleanup can reset key status *after* the initial focus call.
+        // The first responder may still be our field (or its editor) while the window
+        // is no longer key, so retry when isKeyWindow / NSApp.isActive are false.
+        // Delays are empirical: 0.15s covers the common case where AppKit finishes
+        // drag teardown shortly after the field is installed; 0.35s and 0.6s catch
+        // slower reactivation paths (e.g. Mission Control / Spaces transitions).
+        for delay in [0.15, 0.35, 0.6] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak tf] in
+                guard let tf else { return }
+                let isFirstResponder = tf.window?.firstResponder === tf ||
+                                       tf.window?.firstResponder === tf.currentEditor()
+                let isReady = isFirstResponder
+                    && tf.window?.isKeyWindow == true
+                    && NSApp.isActive
+                if isReady { return }
+                reactivate(tf)
+            }
         }
         return tf
     }
