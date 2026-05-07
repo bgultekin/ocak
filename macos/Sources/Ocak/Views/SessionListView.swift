@@ -48,6 +48,8 @@ struct SessionListView: View {
     @State private var draggedSession: ThreadSession?
     @State private var dropIndicator: DropIndicator?
     @State private var isHeaderNewGroupHovered = false
+    @State private var draggedGroup: SessionGroup?
+    @State private var groupDropIndex: Int?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -65,12 +67,18 @@ struct SessionListView: View {
 
             ScrollView {
                 ScrollViewReader { proxy in
-                    VStack(spacing: 10) {
-                        ForEach(Array(store.groupedSessions.enumerated()), id: \.element.group.id) { index, item in
+                    VStack(spacing: 0) {
+                        let groups = store.groupedSessions
+                        // Slot 0: insertion point before first group
+                        if groupDropIndex == 0 {
+                            DropInsertionLine().padding(.vertical, 4)
+                        }
+                        ForEach(Array(groups.enumerated()), id: \.element.group.id) { index, item in
                             GroupListItem(
                                 group: item.group,
                                 sessions: item.sessions,
                                 groupIndex: index,
+                                groupCount: groups.count,
                                 activeSessionID: store.activeSessionID,
                                 onSelect: { (onSelect ?? store.selectSession)($0) },
                                 onRename: { id, name in
@@ -94,12 +102,22 @@ struct SessionListView: View {
                                 },
                                 draggedSession: $draggedSession,
                                 dropIndicator: $dropIndicator,
+                                draggedGroup: $draggedGroup,
+                                groupDropIndex: $groupDropIndex,
                                 store: store
                             )
                             .transition(.move(edge: .bottom).combined(with: .opacity))
+                            // Slot index+1: insertion point after this group.
+                            // The line replaces the gap so it sits centred in the same 10pt space.
+                            if groupDropIndex == index + 1 {
+                                DropInsertionLine().padding(.vertical, 4)
+                            } else if index < groups.count - 1 {
+                                Color.clear.frame(height: 10)
+                            }
                         }
                     }
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.id })
+                    .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.order })
                     .animation(.easeInOut(duration: 0.25), value: store.sessions.map { $0.id })
                     .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 8))
                     .onChange(of: store.activeSessionID) { _, newID in
@@ -169,6 +187,7 @@ struct GroupListItem: View {
     let group: SessionGroup
     let sessions: [ThreadSession]
     let groupIndex: Int
+    let groupCount: Int
     let activeSessionID: UUID?
     var onSelect: (UUID) -> Void
     var onRename: (UUID, String) -> Void
@@ -179,6 +198,8 @@ struct GroupListItem: View {
     var onSessionDroppedOnGroup: (ThreadSession, UUID) -> Void
     @Binding var draggedSession: ThreadSession?
     @Binding var dropIndicator: DropIndicator?
+    @Binding var draggedGroup: SessionGroup?
+    @Binding var groupDropIndex: Int?
     let store: SessionStore
 
     var body: some View {
@@ -196,15 +217,22 @@ struct GroupListItem: View {
             onSessionDroppedOnGroup: onSessionDroppedOnGroup,
             draggedSession: $draggedSession,
             dropIndicator: $dropIndicator,
+            draggedGroup: $draggedGroup,
+            groupDropIndex: $groupDropIndex,
             store: store
         )
         .onDrop(
             of: [.text],
             delegate: GroupDropTargetDelegate(
                 groupID: group.id,
+                groupIndex: groupIndex,
+                groupCount: groupCount,
                 sessionCount: sessions.count,
                 draggedSession: $draggedSession,
                 dropIndicator: $dropIndicator,
+                draggedGroup: $draggedGroup,
+                groupDropIndex: $groupDropIndex,
+                store: store,
                 onSessionDrop: { session in
                     onSessionDroppedOnGroup(session, session.groupID)
                 },
@@ -218,58 +246,107 @@ struct GroupListItem: View {
 
 struct GroupDropTargetDelegate: DropDelegate {
     let groupID: UUID
+    let groupIndex: Int
+    let groupCount: Int
     let sessionCount: Int
     @Binding var draggedSession: ThreadSession?
     @Binding var dropIndicator: DropIndicator?
+    @Binding var draggedGroup: SessionGroup?
+    @Binding var groupDropIndex: Int?
+    let store: SessionStore
     let onSessionDrop: (ThreadSession) -> Void
     var onExpandGroup: (() -> Void)?
 
-    /// True when the dragged session already sits at the trailing slot of this group —
-    /// dropping here would be a no-op move that still triggers a `save()` in the store.
+    func validateDrop(info: DropInfo) -> Bool {
+        draggedSession != nil || (draggedGroup != nil && groupCount > 1)
+    }
+
+    // MARK: - Group reordering
+
+    private func groupInsertion(locationY: CGFloat) -> Int {
+        // Top 30pt of the card → insert before this group; rest → insert after.
+        locationY < 30 ? groupIndex : groupIndex + 1
+    }
+
+    private func isNoOpGroupDrop(insertion: Int) -> Bool {
+        guard let dragged = draggedGroup else { return true }
+        let src = store.groups.sorted { $0.order < $1.order }
+            .firstIndex(where: { $0.id == dragged.id }) ?? 0
+        return insertion == src || insertion == src + 1
+    }
+
+    private func sourceGroupIndex() -> Int? {
+        guard let dragged = draggedGroup else { return nil }
+        return store.groups.sorted { $0.order < $1.order }
+            .firstIndex(where: { $0.id == dragged.id })
+    }
+
+    // MARK: - Session drop helpers
+
     private func isNoOpTrailingDrop(_ session: ThreadSession) -> Bool {
         session.groupID == groupID && session.order == sessionCount - 1
     }
 
-    func performDrop(info: DropInfo) -> Bool {
-        guard let session = draggedSession else {
-            dropIndicator = nil
-            return false
-        }
-        if isNoOpTrailingDrop(session) {
-            dropIndicator = nil
-            draggedSession = nil
-            return false
-        }
-        onSessionDrop(session)
-        dropIndicator = nil
-        return true
-    }
+    // MARK: - DropDelegate
 
     func dropEntered(info: DropInfo) {
-        onExpandGroup?()
-        if let session = draggedSession, isNoOpTrailingDrop(session) { return }
-        withAnimation(.easeInOut(duration: 0.12)) {
-            dropIndicator = DropIndicator(groupID: groupID, index: sessionCount)
-        }
-    }
-
-    func dropUpdated(info: DropInfo) -> DropProposal? {
-        if let session = draggedSession, isNoOpTrailingDrop(session) {
-            return DropProposal(operation: .forbidden)
-        }
-        return DropProposal(operation: .move)
-    }
-
-    func dropExited(info: DropInfo) {
-        if dropIndicator?.groupID == groupID {
+        if draggedGroup != nil {
+            let insertion = groupInsertion(locationY: info.location.y)
+            guard !isNoOpGroupDrop(insertion: insertion) else { return }
+            withAnimation(.easeInOut(duration: 0.12)) { groupDropIndex = insertion }
+        } else {
+            onExpandGroup?()
+            if let session = draggedSession, isNoOpTrailingDrop(session) { return }
             withAnimation(.easeInOut(duration: 0.12)) {
-                dropIndicator = nil
+                dropIndicator = DropIndicator(groupID: groupID, index: sessionCount)
             }
         }
     }
 
-    func validateDrop(info: DropInfo) -> Bool {
-        draggedSession != nil
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        if draggedGroup != nil {
+            let insertion = groupInsertion(locationY: info.location.y)
+            if isNoOpGroupDrop(insertion: insertion) {
+                withAnimation(.easeInOut(duration: 0.12)) { groupDropIndex = nil }
+                return DropProposal(operation: .forbidden)
+            }
+            withAnimation(.easeInOut(duration: 0.12)) { groupDropIndex = insertion }
+            return DropProposal(operation: .move)
+        } else {
+            if let session = draggedSession, isNoOpTrailingDrop(session) {
+                return DropProposal(operation: .forbidden)
+            }
+            return DropProposal(operation: .move)
+        }
+    }
+
+    func dropExited(info: DropInfo) {
+        if draggedGroup != nil {
+            let insertion = groupInsertion(locationY: info.location.y)
+            if groupDropIndex == insertion {
+                withAnimation(.easeInOut(duration: 0.12)) { groupDropIndex = nil }
+            }
+        } else if dropIndicator?.groupID == groupID {
+            withAnimation(.easeInOut(duration: 0.12)) { dropIndicator = nil }
+        }
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        if draggedGroup != nil {
+            defer { groupDropIndex = nil; draggedGroup = nil }
+            guard let src = sourceGroupIndex() else { return false }
+            let insertion = groupDropIndex ?? groupInsertion(locationY: info.location.y)
+            guard !isNoOpGroupDrop(insertion: insertion) else { return false }
+            let dest = src < insertion ? insertion - 1 : insertion
+            withAnimation(.easeInOut(duration: 0.25)) { store.moveGroup(from: src, to: dest) }
+            return true
+        } else {
+            guard let session = draggedSession else { dropIndicator = nil; return false }
+            if isNoOpTrailingDrop(session) { dropIndicator = nil; draggedSession = nil; return false }
+            onSessionDrop(session)
+            dropIndicator = nil
+            return true
+        }
     }
 }
 
@@ -317,6 +394,8 @@ struct SessionGroupListView: View {
     var onSessionDroppedOnGroup: (ThreadSession, UUID) -> Void
     @Binding var draggedSession: ThreadSession?
     @Binding var dropIndicator: DropIndicator?
+    @Binding var draggedGroup: SessionGroup?
+    @Binding var groupDropIndex: Int?
     let store: SessionStore
 
     @State private var isEditingSettings = false
@@ -336,7 +415,7 @@ struct SessionGroupListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            headerRow
+            draggableHeaderRow
             if !group.isCollapsed || isEditingSettings {
                 dividerLine
                 contentArea
@@ -419,6 +498,47 @@ struct SessionGroupListView: View {
             }
         }
         .onDisappear { removeOutsideClickMonitor() }
+    }
+
+    @ViewBuilder private var draggableHeaderRow: some View {
+        if isRenamingGroup {
+            headerRow
+        } else {
+            headerRow
+                .contentShape(Rectangle())
+                .onDrag {
+                    draggedGroup = group
+                    let groupID = group.id
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 100_000_000)
+                        while NSEvent.pressedMouseButtons & 1 != 0 {
+                            try? await Task.sleep(nanoseconds: 50_000_000)
+                        }
+                        if draggedGroup?.id == groupID {
+                            draggedGroup = nil
+                            groupDropIndex = nil
+                        }
+                    }
+                    return NSItemProvider(object: group.id.uuidString as NSString)
+                } preview: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(OcakTheme.sectionLabel)
+                            .frame(width: 24, height: 24)
+                        Text(group.name.uppercased())
+                            .font(.system(size: 12, weight: .light))
+                            .foregroundColor(OcakTheme.sectionLabel)
+                            .tracking(1.2)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(width: 260)
+                    .background(OcakTheme.cardBackground)
+                    .cornerRadius(8)
+                }
+        }
     }
 
     private func startGroupRename() {
@@ -969,6 +1089,7 @@ struct SessionRowDropTargetDelegate: DropDelegate {
     }
 }
 
+
 struct SessionDragPreview: View {
     let session: ThreadSession
 
@@ -1018,15 +1139,24 @@ private struct GroupNameTextField: NSViewRepresentable {
         let attrs = makeAttrs()
         tf.attributedStringValue = NSAttributedString(string: text, attributes: attrs)
 
-        DispatchQueue.main.async {
-            tf.window?.makeFirstResponder(tf)
-            if let editor = tf.currentEditor() as? NSTextView {
+        let activate: (NSTextField) -> Void = { field in
+            guard field.window?.makeFirstResponder(field) == true else { return }
+            if let editor = field.currentEditor() as? NSTextView {
                 editor.typingAttributes = attrs
                 if let storage = editor.textStorage, storage.length > 0 {
                     storage.setAttributes(attrs, range: NSRange(location: 0, length: storage.length))
                 }
                 editor.selectAll(nil)
             }
+        }
+        DispatchQueue.main.async { activate(tf) }
+        // After a group drag-and-drop, AppKit's drag session teardown can reclaim
+        // first responder a few milliseconds later, evicting the text field. A second
+        // attempt after 120ms reliably wins because drag teardown is complete by then.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak tf] in
+            guard let tf, tf.window?.firstResponder !== tf,
+                  tf.window?.firstResponder !== tf.currentEditor() else { return }
+            activate(tf)
         }
         return tf
     }
