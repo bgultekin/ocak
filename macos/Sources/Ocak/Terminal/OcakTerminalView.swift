@@ -143,14 +143,29 @@ final class OcakTerminalView: LocalProcessTerminalView {
     // MARK: - Custom thin scroll indicator
 
     private var scrollIndicatorLayer: CALayer?
+    /// Cached reference to SwiftTerm's built-in NSScroller so we don't scan
+    /// subviews on every scroll event.
+    private weak var cachedBuiltinScroller: NSScroller?
 
     private func setupScrollIndicator() {
         guard scrollIndicatorLayer == nil else { return }
         wantsLayer = true
+
+        // Cache the built-in scroller once so subsequent scroll events don't
+        // need to iterate subviews.
+        cachedBuiltinScroller = subviews.first(where: { $0 is NSScroller }) as? NSScroller
+        cachedBuiltinScroller?.alphaValue = 0
+
         let indicator = CALayer()
         indicator.cornerRadius = 1.5
-        indicator.backgroundColor = NSColor.white.withAlphaComponent(0.35).cgColor
+        // Use a theme-aware color so the indicator stays visible in both dark
+        // and light terminal themes. NSColor.secondaryLabelColor adapts to the
+        // effective appearance automatically.
+        indicator.backgroundColor = NSColor.secondaryLabelColor.withAlphaComponent(0.6).cgColor
         indicator.isHidden = true
+        // Use a high zPosition to ensure the indicator renders above any
+        // sublayers that SwiftTerm may add later.
+        indicator.zPosition = 1000
         layer?.addSublayer(indicator)
         scrollIndicatorLayer = indicator
     }
@@ -166,9 +181,14 @@ final class OcakTerminalView: LocalProcessTerminalView {
     }
 
     private func updateScrollerVisibility() {
-        // Always hide SwiftTerm's built-in scroller.
-        for subview in subviews where subview is NSScroller {
-            subview.alphaValue = 0
+        // Always hide SwiftTerm's built-in scroller. The reference is cached
+        // during setup; fall back to a subview scan only if not yet cached.
+        if let scroller = cachedBuiltinScroller {
+            scroller.alphaValue = 0
+        } else {
+            for subview in subviews where subview is NSScroller {
+                subview.alphaValue = 0
+            }
         }
 
         setupScrollIndicator()
