@@ -365,7 +365,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         isPanelTransitioning = true
         drawerPanel?.slideOut { [weak self] in
             self?.isPanelTransitioning = false
-            self?.store.clearSessionStatuses()
         }
     }
 
