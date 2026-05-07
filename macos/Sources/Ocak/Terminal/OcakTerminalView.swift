@@ -34,6 +34,7 @@ final class OcakTerminalView: LocalProcessTerminalView {
         // propagates the real size only after SwiftUI's next layout pass).
         guard bounds.width > 0, bounds.height > 0 else { return }
         super.layout()
+        updateScrollerVisibility()
         if let data = pendingHistoryReplay {
             pendingHistoryReplay = nil
             let cleaned = Self.strippedMouseReports(from: data)
@@ -137,6 +138,63 @@ final class OcakTerminalView: LocalProcessTerminalView {
         guard digits() else { return nil }
         guard i < bytes.count, bytes[i] == UInt8(ascii: "M") || bytes[i] == UInt8(ascii: "m") else { return nil }
         return i + 1
+    }
+
+    // MARK: - Custom thin scroll indicator
+
+    private var scrollIndicatorLayer: CALayer?
+
+    private func setupScrollIndicator() {
+        guard scrollIndicatorLayer == nil else { return }
+        wantsLayer = true
+        let indicator = CALayer()
+        indicator.cornerRadius = 1.5
+        indicator.backgroundColor = NSColor.white.withAlphaComponent(0.35).cgColor
+        indicator.isHidden = true
+        layer?.addSublayer(indicator)
+        scrollIndicatorLayer = indicator
+    }
+
+    override func scrolled(source terminal: Terminal, yDisp: Int) {
+        super.scrolled(source: terminal, yDisp: yDisp)
+        updateScrollerVisibility()
+    }
+
+    override func scrolled(source: TerminalView, position: Double) {
+        super.scrolled(source: source, position: position)
+        updateScrollerVisibility()
+    }
+
+    private func updateScrollerVisibility() {
+        // Always hide SwiftTerm's built-in scroller.
+        for subview in subviews where subview is NSScroller {
+            subview.alphaValue = 0
+        }
+
+        setupScrollIndicator()
+        guard canScroll else {
+            scrollIndicatorLayer?.isHidden = true
+            return
+        }
+
+        let indicatorWidth: CGFloat = 3
+        let rightInset: CGFloat = 2
+        let totalHeight = bounds.height
+        let knobHeight = max(24, CGFloat(scrollThumbsize) * totalHeight)
+        // CALayer uses non-flipped coordinates (y=0 at bottom).
+        // scrollPosition 0.0 = scrolled to top, 1.0 = at the bottom.
+        let knobY = (1.0 - CGFloat(scrollPosition)) * (totalHeight - knobHeight)
+
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        scrollIndicatorLayer?.frame = CGRect(
+            x: bounds.maxX - indicatorWidth - rightInset,
+            y: knobY,
+            width: indicatorWidth,
+            height: knobHeight
+        )
+        scrollIndicatorLayer?.isHidden = false
+        CATransaction.commit()
     }
 
     /// Required for key events in a .nonactivatingPanel — without this override,
