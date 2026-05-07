@@ -424,7 +424,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
         guard let event = NSApp.currentEvent else { return }
         if event.type == .rightMouseUp {
-            statusMenu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height), in: sender)
+            statusItem.menu = statusMenu
+            sender.performClick(nil)
+            statusItem.menu = nil
         } else {
             toggleDrawer()
         }
