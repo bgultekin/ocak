@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var hoverScreen: NSScreen?
 
     private var statusItem: NSStatusItem!
+    private var statusMenu: NSMenu!
     private var settingsWindow: NSWindow?
     private var settingsModel: SettingsViewModel?
     private var processWatcher: ProcessWatcher?
@@ -393,7 +394,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         updateStatusIcon()
-        let menu = NSMenu()
+
+        statusMenu = NSMenu()
         let settingsItem = NSMenuItem(title: "Settings",
                                        action: #selector(openSettings),
                                        keyEquivalent: "")
@@ -406,13 +408,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                                               action: #selector(checkForUpdates),
                                               keyEquivalent: "")
         checkForUpdatesItem.target = self
-        menu.addItem(settingsItem)
-        menu.addItem(checkForUpdatesItem)
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(quitItem)
-        statusItem.menu = menu
+        statusMenu.addItem(settingsItem)
+        statusMenu.addItem(checkForUpdatesItem)
+        statusMenu.addItem(NSMenuItem.separator())
+        statusMenu.addItem(quitItem)
+
+        if let button = statusItem.button {
+            button.action = #selector(statusItemClicked(_:))
+            button.target = self
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        }
 
         observeAttention()
+    }
+
+    @objc private func statusItemClicked(_ sender: NSStatusBarButton) {
+        guard let event = NSApp.currentEvent else { return }
+        if event.type == .rightMouseUp {
+            statusMenu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height), in: sender)
+        } else {
+            toggleDrawer()
+        }
     }
 
     private func observeAttention() {
