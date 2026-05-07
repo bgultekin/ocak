@@ -233,7 +233,14 @@ final class SessionStore {
     }
 
     func selectSession(_ id: UUID) {
+        guard id != activeSessionID else { return }
         activeSessionID = id
+        if let idx = sessions.firstIndex(where: { $0.id == id }) {
+            let s = sessions[idx].status
+            if s == .done || s == .needs_input {
+                sessions[idx].status = .new
+            }
+        }
     }
 
     func toggleMark(_ id: UUID) {
@@ -272,15 +279,6 @@ final class SessionStore {
         showSuccessFlash = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             self?.showSuccessFlash = false
-        }
-    }
-
-    func clearSessionStatuses() {
-        for idx in sessions.indices {
-            let s = sessions[idx].status
-            if s == .done || s == .needs_input {
-                sessions[idx].status = .new
-            }
         }
     }
 
