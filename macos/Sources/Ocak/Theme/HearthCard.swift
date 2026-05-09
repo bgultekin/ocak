@@ -2,6 +2,9 @@ import AppKit
 import SwiftUI
 
 // MARK: - Warm frosted-glass backing
+// Note: cardBg and cardEdge colors are inlined below rather than referencing OcakTheme
+// to work around a SourceKit scoping issue where Theme/* types aren't resolved in the
+// language server when this file is compiled in isolation. Values must match OcakTheme.
 
 private struct WarmVisualEffectView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {

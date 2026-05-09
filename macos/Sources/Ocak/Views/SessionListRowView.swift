@@ -22,6 +22,7 @@ struct SessionListRowView: View {
     @State private var displayedName: String = ""
     @State private var typingTask: Task<Void, Never>?
     @State private var userJustRenamed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 10) {
@@ -97,6 +98,8 @@ struct SessionListRowView: View {
             }
             if userJustRenamed {
                 userJustRenamed = false
+                displayedName = newName
+            } else if reduceMotion {
                 displayedName = newName
             } else {
                 animateTyping(newName)
