@@ -1,144 +1,76 @@
 import SwiftUI
 import AppKit
 
+// MARK: - Hearth palette (always-dark, warm ember tones)
+
 enum OcakTheme {
-    // MARK: - Terminal backgrounds
 
-    static var terminalBackground: Color {
-        terminalEffectiveMode == .dark ? Color(hex: 0x0D0D10) : Color.white
-    }
+    // MARK: Card chrome
+    static let cardBg        = Color(red: 22/255, green: 17/255, blue: 13/255).opacity(0.78)
+    static let cardEdge      = Color(red: 1, green: 200/255, blue: 140/255).opacity(0.08)
+    static let termBg        = Color(hex: 0x0E0A07)
 
-    static var terminalHeaderBg: Color {
-        effectiveMode == .dark ? Color(hex: 0x1C1C1E) : Color(hex: 0xF5F5F7)
-    }
+    // MARK: Row
+    static let rowHighlight  = Color(red: 48/255, green: 36/255, blue: 26/255).opacity(0.92)
 
-    static var terminalDivider: Color {
-        effectiveMode == .dark ? Color(hex: 0x2A2A2C) : Color(hex: 0xD1D1D6)
-    }
+    // MARK: Status (ember dots)
+    static let ember         = Color(hex: 0xFF7A3A)
+    static let emberGlow     = Color(hex: 0xFF7A3A).opacity(0.55)
+    static let awaiting      = Color(hex: 0xFFC56E)
+    static let awaitingGlow  = Color(hex: 0xFFC56E).opacity(0.48)
+    static let done          = Color(hex: 0x9EC38A)
+    static let doneGlow      = Color(hex: 0x9EC38A).opacity(0.32)
+    static let coalDim       = Color(hex: 0x5A3A26)
 
-    // MARK: - Card / surface
+    // MARK: Text hierarchy
+    static let text          = Color(red: 243/255, green: 232/255, blue: 216/255)
+    static let textDim       = Color(red: 243/255, green: 232/255, blue: 216/255).opacity(0.55)
+    static let textFaint     = Color(red: 243/255, green: 232/255, blue: 216/255).opacity(0.32)
+    static let textMuted     = Color(red: 243/255, green: 232/255, blue: 216/255).opacity(0.20)
 
-    static var cardBackground: Color {
-        effectiveMode == .dark ? Color(hex: 0x242426) : Color(hex: 0xF5F5F7)
-    }
-
-    // oklch(0.75 0.165 45) ≈ sRGB(1.0, 0.530, 0.298) at 10% opacity (0.9 transparency)
-    static let activeTint = Color(red: 1.0, green: 0.530, blue: 0.298).opacity(0.1)
-
-    // oklch(0.75 0.165 45) ≈ sRGB(1.0, 0.530, 0.298)
-    static let activeIconColor = Color(red: 1.0, green: 0.530, blue: 0.298)
-
-    // oklch(0.75 0.165 45) ≈ sRGB(1.0, 0.530, 0.298) at 0.7 opacity
-    static let activeBorder = Color(red: 1.0, green: 0.530, blue: 0.298).opacity(0.7)
-
-    static let warningIcon = Color.orange
-
-    static var warningBackground: Color {
-        effectiveMode == .dark ? Color.orange.opacity(0.1) : Color.orange.opacity(0.08)
-    }
-
-    static var statusBlueBackground: Color {
-        effectiveMode == .dark ? Color(hex: 0x0A84FF).opacity(0.1) : Color(hex: 0x0A84FF).opacity(0.08)
-    }
-
-    static var statusBlueBorder: Color {
-        effectiveMode == .dark ? Color.clear : Color(hex: 0x0A84FF).opacity(0.3)
-    }
-
-    static var dropTargetBackground: Color {
-        effectiveMode == .dark ? Color(hex: 0x0A84FF).opacity(0.15) : Color(hex: 0x0A84FF).opacity(0.12)
-    }
-
-    static var dropTargetBorder: Color {
-        effectiveMode == .dark ? Color(hex: 0x0A84FF).opacity(0.5) : Color(hex: 0x0A84FF).opacity(0.4)
-    }
-
-    // MARK: - Status dots (same in both themes)
-
-    static let statusBlue = Color(hex: 0x0A84FF)
-    static let statusAmber = Color(hex: 0xFF9F0A)
-    static let statusGreen = Color(hex: 0x30D158)
-    static let statusGray = Color(nsColor: .tertiaryLabelColor)
-
-    // MARK: - Session icons (AI tool type icons)
-
-    static var sessionIconColor: Color {
-        effectiveMode == .dark ? Color.white.opacity(0.73) : Color(hex: 0x1D1D1F).opacity(0.8)
-    }
-
-    // MARK: - Label hierarchy
-
-    static var labelPrimary: Color {
-        effectiveMode == .dark ? Color(hex: 0xEBEBF5) : Color(hex: 0x1D1D1F)
-    }
-
-    static var labelSecondary: Color {
-        effectiveMode == .dark ? Color(hex: 0xEBEBF5, alpha: 0.38) : Color(hex: 0x1D1D1F, alpha: 0.6)
-    }
-
-    static var sectionLabel: Color {
-        effectiveMode == .dark ? Color(hex: 0x636366) : Color(hex: 0x6C6C70)
-    }
-
-    static var sectionLabelHighlighted: Color {
-        effectiveMode == .dark ? Color(hex: 0xAEAEB2) : Color(hex: 0x1C1C1E)
-    }
-
-    // MARK: - CTA / link backgrounds
-
-    static let ctaBackground = Color.primary.opacity(0.08)
-
-    // MARK: - Button backgrounds
-
-    static var buttonBackground: Color {
-        effectiveMode == .dark ? Color(hex: 0x2A2A2C) : Color(hex: 0xE5E5EA)
-    }
-
-    static var inputBackground: Color {
-        effectiveMode == .dark ? Color(hex: 0x3A3A3C) : Color(hex: 0xE5E5EA)
-    }
-
-    static var inputBorder: Color {
-        effectiveMode == .dark ? Color.white.opacity(0.08) : Color(hex: 0xB8B8BC)
-    }
-
-    static var buttonHoverBackground: Color {
-        effectiveMode == .dark ? Color.white.opacity(0.12) : Color.black.opacity(0.08)
-    }
-
-    static var dragPreviewBackground: Color {
-        effectiveMode == .dark ? Color(hex: 0x1E1E20) : Color(hex: 0x424244)
-    }
-
-    static var divider: Color {
-        effectiveMode == .dark ? Color.white.opacity(0.04) : Color(hex: 0xC7C7CC)
-    }
-
-    // MARK: - System color helpers
-
-    static let label = Color(nsColor: .labelColor)
-    static let secondaryLabel = Color(nsColor: .secondaryLabelColor)
-    static let tertiaryLabel = Color(nsColor: .tertiaryLabelColor)
-    static let separator = Color(nsColor: .separatorColor)
-    static let controlAccent = Color(nsColor: .controlAccentColor)
-    static let control = Color(nsColor: .controlColor)
-
-    // MARK: - Helpers
-
-    private static var effectiveMode: AppearanceMode {
-        AppearanceConfigStore.shared.effectiveMode
-    }
-
-    private static var terminalEffectiveMode: AppearanceMode {
-        TerminalThemeConfigStore.shared.effectiveMode
-    }
+    // MARK: Aliases (map to Hearth equivalents — keep these so call sites compile unchanged)
+    static var terminalBackground: Color   { termBg }
+    static var terminalHeaderBg: Color     { Color(hex: 0x0E0A07) }
+    static var terminalDivider: Color      { cardEdge }
+    static var cardBackground: Color       { cardBg }
+    static let activeTint                  = rowHighlight
+    static let activeIconColor             = ember
+    static let activeBorder                = ember.opacity(0.7)
+    static let warningIcon                 = Color.orange
+    static var warningBackground: Color    { Color.orange.opacity(0.1) }
+    static var statusBlueBackground: Color { ember.opacity(0.1) }
+    static var statusBlueBorder: Color     { Color.clear }
+    static var dropTargetBackground: Color { ember.opacity(0.15) }
+    static var dropTargetBorder: Color     { ember.opacity(0.5) }
+    static let statusBlue                  = ember
+    static let statusAmber                 = awaiting
+    static let statusGreen                 = done
+    static var statusGray: Color           { coalDim }
+    static var sessionIconColor: Color     { textDim }
+    static var labelPrimary: Color         { text }
+    static var labelSecondary: Color       { textDim }
+    static var sectionLabel: Color         { textDim }
+    static var sectionLabelHighlighted: Color { text }
+    static let ctaBackground               = text.opacity(0.08)
+    static var buttonBackground: Color     { Color(hex: 0x2A1C12).opacity(0.8) }
+    static var inputBackground: Color      { Color(hex: 0x2A1C12).opacity(0.8) }
+    static var inputBorder: Color          { cardEdge }
+    static var buttonHoverBackground: Color { text.opacity(0.08) }
+    static var dragPreviewBackground: Color { Color(hex: 0x2A1C12) }
+    static var divider: Color              { cardEdge }
+    static let label                       = text
+    static let secondaryLabel              = textDim
+    static let tertiaryLabel               = textFaint
+    static let separator                   = cardEdge
+    static let controlAccent               = ember
+    static let control                     = cardBg
 
     static func statusColor(for status: SessionStatus) -> Color {
         switch status {
-        case .new: return statusGray
-        case .working: return statusBlue
-        case .needs_input: return statusAmber
-        case .done: return statusGreen
+        case .new:          return coalDim
+        case .working:      return ember
+        case .needs_input:  return awaiting
+        case .done:         return done
         }
     }
 }
@@ -146,7 +78,7 @@ enum OcakTheme {
 extension Color {
     init(hex: UInt32, alpha: Double = 1.0) {
         let r = Double((hex >> 16) & 0xFF) / 255.0
-        let g = Double((hex >> 8) & 0xFF) / 255.0
+        let g = Double((hex >> 8)  & 0xFF) / 255.0
         let b = Double(hex & 0xFF) / 255.0
         self.init(.sRGB, red: r, green: g, blue: b, opacity: alpha)
     }
