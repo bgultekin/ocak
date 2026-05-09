@@ -748,6 +748,7 @@ struct SessionGroupListView: View {
                     draggedSession: $draggedSession,
                     dropIndicator: $dropIndicator
                 )
+                .padding(EdgeInsets(top: 0, leading: 6, bottom: 6, trailing: 6))
                 .transition(.opacity)
             }
             if dropIndicator?.groupID == group.id && dropIndicator?.index == sessions.count {
@@ -759,11 +760,12 @@ struct SessionGroupListView: View {
     }
 
     private var emptyState: some View {
-        Text("No terminals")
-            .font(.system(size: 11))
-            .foregroundColor(OcakTheme.sectionLabel.opacity(0.5))
+        Text("no terminals")
+            .font(.custom("JetBrainsMono-Regular", size: 11))
+            .italic()
+            .foregroundColor(OcakTheme.textMuted)
             .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, 8)
+            .padding(.vertical, 20)
     }
 
     private var settingsForm: some View {

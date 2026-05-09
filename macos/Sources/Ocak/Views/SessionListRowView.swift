@@ -50,8 +50,8 @@ struct SessionListRowView: View {
 
             statusBadge
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background {
             ZStack {
                 if session.isMarked {
