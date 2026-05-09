@@ -21,6 +21,34 @@ extension Image {
     }
 }
 
+private struct FlameIcon: View {
+    @State private var flickering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Image.ocakIcon(active: true)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 20, height: 20)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [Color(hex: 0xFFD28A), Color(hex: 0xFF7A3A), Color(hex: 0xC9492A)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .shadow(color: Color(hex: 0xFF7A3A).opacity(0.55), radius: 6)
+            .scaleEffect(y: flickering ? 0.96 : 1.0)
+            .opacity(flickering ? 0.92 : 1.0)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                    flickering = true
+                }
+            }
+    }
+}
+
 struct DropIndicator: Equatable {
     let groupID: UUID
     let index: Int
@@ -57,12 +85,12 @@ struct SessionListView: View {
 
             if UpdateService.shared.availableUpdate != nil {
                 UpdateAvailableBox(service: UpdateService.shared)
-                    .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))
+                    .padding(EdgeInsets(top: 8, leading: 30, bottom: 0, trailing: 24))
             }
 
             if !HookInstaller.isInstalled() || !HookInstaller.isOpenCodeHooksInstalled() {
                 HookSetupBox()
-                    .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))
+                    .padding(EdgeInsets(top: 8, leading: 30, bottom: 0, trailing: 24))
             }
 
             ScrollView {
@@ -112,14 +140,14 @@ struct SessionListView: View {
                             if groupDropIndex == index + 1 {
                                 DropInsertionLine().padding(.vertical, 4)
                             } else if index < groups.count - 1 {
-                                Color.clear.frame(height: 10)
+                                Color.clear.frame(height: 14)
                             }
                         }
                     }
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.id })
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.order })
                     .animation(.easeInOut(duration: 0.25), value: store.sessions.map { $0.id })
-                    .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 8))
+                    .padding(EdgeInsets(top: 14, leading: 30, bottom: 50, trailing: 24))
                     .onChange(of: store.activeSessionID) { _, newID in
                         if let newID {
                             withAnimation {
@@ -134,36 +162,26 @@ struct SessionListView: View {
     }
 
     private var appHeader: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(OcakTheme.buttonBackground)
-                Image.ocakIcon(active: true)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
-            }
-            .frame(width: 26, height: 26)
+        HStack(spacing: 10) {
+            FlameIcon()
 
-            if let logo = Image.ocakTextLogo(colorScheme: colorScheme) {
-                logo
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 16)
-            } else {
-                Text("Ocak")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(OcakTheme.labelPrimary)
-            }
+            Text("Ocak")
+                .font(.custom("InstrumentSerif-Italic", size: 24))
+                .foregroundColor(OcakTheme.text)
+                .kerning(-0.4)
 
             Spacer()
 
             Button(action: onNewGroup) {
                 Image(systemName: "folder.badge.plus")
-                    .font(.system(size: 14))
-                    .foregroundColor(OcakTheme.labelPrimary.opacity(0.8))
+                    .font(.system(size: 13))
+                    .foregroundColor(OcakTheme.textDim)
                     .frame(width: 28, height: 28)
-                    .background(isHeaderNewGroupHovered ? OcakTheme.buttonHoverBackground : OcakTheme.buttonBackground)
+                    .background(isHeaderNewGroupHovered ? OcakTheme.buttonHoverBackground : Color.clear)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(OcakTheme.cardEdge, lineWidth: 1)
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: 7))
                     .contentShape(RoundedRectangle(cornerRadius: 7))
             }
@@ -175,10 +193,9 @@ struct SessionListView: View {
             }
         }
         .padding(.horizontal, 16)
-        .frame(height: 64)
-        .background(OcakTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))
+        .padding(.vertical, 14)
+        .hearthCard()
+        .padding(EdgeInsets(top: 80, leading: 30, bottom: 0, trailing: 24))
     }
 }
 
