@@ -18,6 +18,7 @@ let package = Package(
             resources: [
                 .copy("Resources/claude-ocak-marketplace"),
                 .copy("Resources/opencode-ocak"),
+                .process("Resources/Fonts/"),
                 .process("Resources/ocak-menubar-icon-default.png"),
                 .process("Resources/ocak-menubar-icon-active.png"),
                 .process("Resources/ocak-app-icon-light.png"),
