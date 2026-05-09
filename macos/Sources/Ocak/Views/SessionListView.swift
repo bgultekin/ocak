@@ -11,14 +11,6 @@ extension Image {
         return Image(systemName: "terminal")
     }
 
-    static func ocakTextLogo(colorScheme: ColorScheme) -> Image? {
-        let name = colorScheme == .dark ? "ocak-text-light" : "ocak-text-dark"
-        if let url = Bundle.module.url(forResource: name, withExtension: "png"),
-           let nsImage = NSImage(contentsOf: url) {
-            return Image(nsImage: nsImage)
-        }
-        return nil
-    }
 }
 
 private struct FlameIcon: View {
@@ -72,7 +64,6 @@ struct SessionListView: View {
     var onNewSession: (UUID) -> Void
     var onNewGroup: () -> Void
 
-    @Environment(\.colorScheme) private var colorScheme
     @State private var draggedSession: ThreadSession?
     @State private var dropIndicator: DropIndicator?
     @State private var isHeaderNewGroupHovered = false
