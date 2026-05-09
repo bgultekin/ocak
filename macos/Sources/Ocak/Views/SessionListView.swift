@@ -430,9 +430,8 @@ struct SessionGroupListView: View {
                     .transition(.opacity)
             }
         }
-        .padding(12)
-        .background(groupBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(EdgeInsets(top: 12, leading: 14, bottom: 10, trailing: 14))
+        .hearthCard(radius: 14)
         .animation(.easeInOut(duration: 0.2), value: isEditingSettings)
         .animation(.easeInOut(duration: 0.2), value: group.isCollapsed)
         .animation(.easeInOut(duration: 0.15), value: isDropTarget)
@@ -476,9 +475,9 @@ struct SessionGroupListView: View {
                 .frame(maxWidth: .infinity)
             } else {
                 Text(group.name.uppercased())
-                    .font(.system(size: 12, weight: .light))
+                    .font(.custom("JetBrainsMono-Medium", size: 10))
                     .foregroundColor(groupTitleColor)
-                    .tracking(1.2)
+                    .tracking(1.6)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startGroupRename() }
                     .contextMenu { groupContextMenuItems }
@@ -535,16 +534,15 @@ struct SessionGroupListView: View {
                             .foregroundColor(OcakTheme.sectionLabel)
                             .frame(width: 24, height: 24)
                         Text(group.name.uppercased())
-                            .font(.system(size: 12, weight: .light))
+                            .font(.custom("JetBrainsMono-Medium", size: 10))
                             .foregroundColor(OcakTheme.sectionLabel)
-                            .tracking(1.2)
+                            .tracking(1.6)
                         Spacer()
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .frame(width: 260)
-                    .background(OcakTheme.cardBackground)
-                    .cornerRadius(8)
+                    .hearthCard(radius: 10)
                 }
         }
     }
@@ -766,11 +764,6 @@ struct SessionGroupListView: View {
             .foregroundColor(OcakTheme.sectionLabel.opacity(0.5))
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.vertical, 8)
-    }
-
-    private var groupBackground: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(OcakTheme.cardBackground)
     }
 
     private var settingsForm: some View {
@@ -1129,9 +1122,10 @@ private struct GroupNameTextField: NSViewRepresentable {
 
     func makeAttrs() -> [NSAttributedString.Key: Any] {
         [
-            .font: NSFont.systemFont(ofSize: 12, weight: .light),
+            .font: NSFont(name: "JetBrainsMono-Medium", size: 10)
+                  ?? NSFont.monospacedSystemFont(ofSize: 10, weight: .medium),
             .foregroundColor: color,
-            .kern: CGFloat(1.2),
+            .kern: CGFloat(1.6),
         ]
     }
 
