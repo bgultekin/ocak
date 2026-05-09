@@ -40,8 +40,8 @@ struct SessionListRowView: View {
                     }
             } else {
                 Text(displayedName)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(OcakTheme.labelPrimary)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(isSelected ? OcakTheme.text : OcakTheme.text.opacity(0.86))
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startRename() }
             }
@@ -67,10 +67,11 @@ struct SessionListRowView: View {
                 isSelected ? OcakTheme.activeTint : Color.clear
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(isSelected ? OcakTheme.activeBorder : Color.clear, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(isSelected ? OcakTheme.ember : Color.clear, lineWidth: 1)
+                .shadow(color: isSelected ? OcakTheme.emberGlow : .clear, radius: 9)
         )
         .opacity(isDragging ? 0.35 : 1.0)
         .contentShape(Rectangle())
@@ -108,36 +109,26 @@ struct SessionListRowView: View {
     }
 
     private var statusDot: some View {
-        let color = OcakTheme.statusColor(for: session.status)
-        let glowColor: Color = (session.status == .working || session.status == .needs_input)
-            ? color.opacity(0.5)
-            : .clear
-        let symbolName = session.statusIcon
-        return Image(systemName: symbolName)
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundColor(isSelected ? OcakTheme.activeIconColor : OcakTheme.sessionIconColor)
-            .contentTransition(.symbolEffect(.replace))
-            .shadow(color: glowColor, radius: 4)
-            .frame(width: 14, alignment: .center)
+        EmberDot(status: session.status, size: 8)
     }
 
     private var statusBadge: some View {
         let (text, color) = badgeInfo
         return Text(text)
-            .font(.system(size: 10, weight: .medium))
+            .font(.custom("JetBrainsMono-Regular", size: 10))
             .foregroundColor(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 5))
     }
 
     private var badgeInfo: (String, Color) {
         switch session.status {
-        case .new: return ("Idle", Color(hex: 0x8E8E93))
-        case .working: return ("Running", OcakTheme.statusBlue)
-        case .needs_input: return ("Needs Input", OcakTheme.statusAmber)
-        case .done: return ("Done", OcakTheme.statusGreen)
+        case .new:          return ("idle",      OcakTheme.textFaint)
+        case .working:      return ("thinking…", OcakTheme.ember)
+        case .needs_input:  return ("waiting",   OcakTheme.awaiting)
+        case .done:         return ("ready",     OcakTheme.done)
         }
     }
 

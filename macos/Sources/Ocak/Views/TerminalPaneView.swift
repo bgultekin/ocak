@@ -42,12 +42,8 @@ struct TerminalPaneView: View {
     }
 
     private func terminalHeader(for session: ThreadSession) -> some View {
-        let dotColor = OcakTheme.statusColor(for: session.status)
         return HStack(spacing: 8) {
-            Circle()
-                .fill(dotColor)
-                .frame(width: 8, height: 8)
-                .shadow(color: dotColor.opacity(0.5), radius: 4)
+            EmberDot(status: session.status, size: 9)
 
             Text(session.name)
                 .font(.system(size: 14, weight: .semibold))
