@@ -17,7 +17,7 @@ struct TerminalPaneView: View {
             VStack(spacing: 0) {
                 terminalHeader(for: session)
                 Rectangle()
-                    .fill(OcakTheme.terminalDivider)
+                    .fill(OcakTheme.cardEdge)
                     .frame(height: 1)
                 TerminalSwiftUIView(
                     sessionID: session.id,
@@ -32,37 +32,34 @@ struct TerminalPaneView: View {
                     }
                 )
                 .padding(EdgeInsets(top: 4, leading: 8, bottom: 8, trailing: 8))
-                .background(OcakTheme.terminalBackground)
+                .background(OcakTheme.termBg)
             }
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            .hearthCard(radius: 14, overrideBg: OcakTheme.termBg)
+            .padding(EdgeInsets(top: 80, leading: 8, bottom: 8, trailing: 0))
         } else {
             emptyState
         }
     }
 
     private func terminalHeader(for session: ThreadSession) -> some View {
-        return HStack(spacing: 8) {
+        HStack(spacing: 8) {
             EmberDot(status: session.status, size: 9)
 
             Text(session.name)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(OcakTheme.labelPrimary)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(OcakTheme.text)
                 .lineLimit(1)
 
             if let groupName {
-                HStack(spacing: 0) {
-                    Text("/ ")
-                        .font(.system(size: 12, weight: .light))
-                        .foregroundColor(OcakTheme.sectionLabel)
-                        .tracking(1.2)
-                    Text(groupName.uppercased())
-                        .font(.system(size: 12, weight: .light))
-                        .foregroundColor(OcakTheme.sectionLabel)
-                        .tracking(1.2)
-                }
-                .lineLimit(1)
-                .padding(.leading, 10)
+                Text("/")
+                    .font(.custom("JetBrainsMono-Regular", size: 11))
+                    .foregroundColor(OcakTheme.textFaint)
+                    .padding(.leading, 4)
+                Text(groupName.uppercased())
+                    .font(.custom("JetBrainsMono-Regular", size: 11))
+                    .foregroundColor(OcakTheme.textDim)
+                    .tracking(0.5)
+                    .lineLimit(1)
             }
 
             Spacer()
@@ -75,9 +72,19 @@ struct TerminalPaneView: View {
                 CloseButton(action: onClose)
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 18)
         .frame(height: 48)
-        .background(OcakTheme.terminalHeaderBg)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(red: 1, green: 150/255, blue: 80/255).opacity(0.04),
+                    Color.clear,
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .background(OcakTheme.termBg)
+        )
     }
 
     private var emptyState: some View {
