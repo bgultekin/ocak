@@ -24,6 +24,7 @@ private struct WarmVisualEffectView: NSViewRepresentable {
 struct HearthCardModifier: ViewModifier {
     var radius: CGFloat = 14
     var overrideBg: Color?
+    var shadowRadius: CGFloat = 25
 
     func body(content: Content) -> some View {
         content
@@ -35,7 +36,7 @@ struct HearthCardModifier: ViewModifier {
                 .clipShape(RoundedRectangle(cornerRadius: radius))
             )
             .clipShape(RoundedRectangle(cornerRadius: radius))
-            .shadow(color: .black.opacity(0.55), radius: 25, x: 0, y: 18)
+            .shadow(color: .black.opacity(0.55), radius: shadowRadius, x: 0, y: shadowRadius * 0.72)
             .shadow(color: Color(red: 1, green: 200/255, blue: 140/255).opacity(0.08), radius: 0, x: 0, y: 0)
             .overlay(
                 RoundedRectangle(cornerRadius: radius)
@@ -60,7 +61,7 @@ struct HearthCardModifier: ViewModifier {
 }
 
 extension View {
-    func hearthCard(radius: CGFloat = 14, overrideBg: Color? = nil) -> some View {
-        modifier(HearthCardModifier(radius: radius, overrideBg: overrideBg))
+    func hearthCard(radius: CGFloat = 14, overrideBg: Color? = nil, shadowRadius: CGFloat = 25) -> some View {
+        modifier(HearthCardModifier(radius: radius, overrideBg: overrideBg, shadowRadius: shadowRadius))
     }
 }

@@ -76,12 +76,12 @@ struct SessionListView: View {
 
             if UpdateService.shared.availableUpdate != nil {
                 UpdateAvailableBox(service: UpdateService.shared)
-                    .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 24))
+                    .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 8))
             }
 
             if !HookInstaller.isInstalled() || !HookInstaller.isOpenCodeHooksInstalled() {
                 HookSetupBox()
-                    .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 24))
+                    .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 8))
             }
 
             ScrollView {
@@ -138,7 +138,7 @@ struct SessionListView: View {
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.id })
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.order })
                     .animation(.easeInOut(duration: 0.25), value: store.sessions.map { $0.id })
-                    .padding(EdgeInsets(top: 14, leading: 8, bottom: 50, trailing: 24))
+                    .padding(EdgeInsets(top: 14, leading: 8, bottom: 50, trailing: 8))
                     .onChange(of: store.activeSessionID) { _, newID in
                         if let newID {
                             withAnimation {
@@ -186,7 +186,7 @@ struct SessionListView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .hearthCard()
-        .padding(EdgeInsets(top: 80, leading: 8, bottom: 0, trailing: 24))
+        .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 8))
     }
 }
 
@@ -748,7 +748,7 @@ struct SessionGroupListView: View {
                     draggedSession: $draggedSession,
                     dropIndicator: $dropIndicator
                 )
-                .padding(EdgeInsets(top: 0, leading: 6, bottom: 6, trailing: 6))
+                .padding(EdgeInsets(top: 0, leading: 0, bottom: 6, trailing: 0))
                 .transition(.opacity)
             }
             if dropIndicator?.groupID == group.id && dropIndicator?.index == sessions.count {
