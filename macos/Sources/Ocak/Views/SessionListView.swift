@@ -76,12 +76,12 @@ struct SessionListView: View {
 
             if UpdateService.shared.availableUpdate != nil {
                 UpdateAvailableBox(service: UpdateService.shared)
-                    .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 8))
+                    .padding(EdgeInsets(top: 8, leading: 14, bottom: 0, trailing: 14))
             }
 
             if !HookInstaller.isInstalled() || !HookInstaller.isOpenCodeHooksInstalled() {
                 HookSetupBox()
-                    .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 8))
+                    .padding(EdgeInsets(top: 8, leading: 14, bottom: 0, trailing: 14))
             }
 
             ScrollView {
@@ -138,7 +138,7 @@ struct SessionListView: View {
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.id })
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.order })
                     .animation(.easeInOut(duration: 0.25), value: store.sessions.map { $0.id })
-                    .padding(EdgeInsets(top: 14, leading: 8, bottom: 50, trailing: 8))
+                    .padding(EdgeInsets(top: 14, leading: 14, bottom: 50, trailing: 14))
                     .onChange(of: store.activeSessionID) { _, newID in
                         if let newID {
                             withAnimation {
@@ -185,8 +185,8 @@ struct SessionListView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .hearthCard()
-        .padding(EdgeInsets(top: 8, leading: 8, bottom: 0, trailing: 8))
+        .hearthCard(shadowRadius: 10)
+        .padding(EdgeInsets(top: 12, leading: 14, bottom: 0, trailing: 14))
     }
 }
 
@@ -431,7 +431,7 @@ struct SessionGroupListView: View {
             }
         }
         .padding(EdgeInsets(top: 12, leading: 14, bottom: 10, trailing: 14))
-        .hearthCard(radius: 14)
+        .hearthCard(radius: 14, shadowRadius: 10)
         .animation(.easeInOut(duration: 0.2), value: isEditingSettings)
         .animation(.easeInOut(duration: 0.2), value: group.isCollapsed)
         .animation(.easeInOut(duration: 0.15), value: isDropTarget)
@@ -542,7 +542,7 @@ struct SessionGroupListView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .frame(width: 260)
-                    .hearthCard(radius: 10)
+                    .hearthCard(radius: 10, shadowRadius: 10)
                 }
         }
     }

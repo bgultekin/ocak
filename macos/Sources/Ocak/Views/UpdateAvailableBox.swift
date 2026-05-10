@@ -64,7 +64,7 @@ struct UpdateAvailableBox: View {
                 }
             }
             .padding(12)
-            .hearthCard(radius: 12)
+            .hearthCard(radius: 12, shadowRadius: 10)
         } else {
             EmptyView()
         }
