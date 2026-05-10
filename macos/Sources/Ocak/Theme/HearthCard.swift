@@ -30,7 +30,7 @@ struct HearthCardModifier: ViewModifier {
             .background(
                 ZStack {
                     WarmVisualEffectView()
-                    (overrideBg ?? Color(red: 22/255, green: 17/255, blue: 13/255).opacity(0.78))
+                    (overrideBg ?? Color(red: 20/255, green: 17/255, blue: 13/255).opacity(0.78))
                 }
                 .clipShape(RoundedRectangle(cornerRadius: radius))
             )

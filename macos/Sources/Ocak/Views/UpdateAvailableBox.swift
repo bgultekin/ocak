@@ -64,8 +64,7 @@ struct UpdateAvailableBox: View {
                 }
             }
             .padding(12)
-            .background(OcakTheme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .hearthCard(radius: 12)
         } else {
             EmptyView()
         }

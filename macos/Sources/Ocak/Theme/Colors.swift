@@ -6,7 +6,7 @@ import AppKit
 enum OcakTheme {
 
     // MARK: Card chrome
-    static let cardBg        = Color(red: 22/255, green: 17/255, blue: 13/255).opacity(0.78)
+    static let cardBg        = Color(red: 20/255, green: 17/255, blue: 13/255).opacity(0.78)
     static let cardEdge      = Color(red: 1, green: 200/255, blue: 140/255).opacity(0.08)
     static let termBg        = Color(hex: 0x0E0A07)
 

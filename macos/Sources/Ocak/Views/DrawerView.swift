@@ -132,7 +132,7 @@ struct DrawerView: View {
             onEnd: {}
         )
 
-        if edge == .right { sessionResizeHandle.padding(.trailing, 6) }
+        if edge == .right { sessionResizeHandle.padding(.leading, 8) }
 
         SessionListView(
             store: store,
@@ -148,7 +148,7 @@ struct DrawerView: View {
             onNewGroup: onNewGroup
         )
 
-        if edge == .left { sessionResizeHandle.padding(.leading, 6) }
+        if edge == .left { sessionResizeHandle.padding(.trailing, 8) }
     }
 
     @ViewBuilder

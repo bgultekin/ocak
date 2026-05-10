@@ -41,8 +41,8 @@ struct SessionListRowView: View {
                     }
             } else {
                 Text(displayedName)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(isSelected ? OcakTheme.text : OcakTheme.text.opacity(0.86))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color(red: 243/255, green: 232/255, blue: 216/255))
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startRename() }
             }
