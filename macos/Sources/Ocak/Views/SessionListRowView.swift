@@ -54,19 +54,7 @@ struct SessionListRowView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background {
-            ZStack {
-                if session.isMarked {
-                    GeometryReader { geo in
-                        let lineHeight = geo.size.height * 0.5
-                        let yOffset = (geo.size.height - lineHeight) / 2
-                        OcakTheme.activeBorder
-                            .frame(width: 3, height: lineHeight)
-                            .cornerRadius(2)
-                            .position(x: 2, y: yOffset + lineHeight / 2)
-                    }
-                }
-                isSelected ? OcakTheme.activeTint : Color.clear
-            }
+            isSelected ? OcakTheme.activeTint : Color.clear
         }
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
@@ -112,7 +100,7 @@ struct SessionListRowView: View {
     }
 
     private var statusDot: some View {
-        EmberDot(status: session.status, size: 8)
+        EmberDot(status: session.status, size: 8, isMarked: session.isMarked)
     }
 
     private var statusBadge: some View {

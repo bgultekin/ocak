@@ -4,6 +4,7 @@ import SwiftUI
 struct EmberDot: View {
     let status: SessionStatus
     var size: CGFloat = 8
+    var isMarked: Bool = false
 
     @State private var phase: Double = 1.0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -35,16 +36,24 @@ struct EmberDot: View {
     }
 
     var body: some View {
-        Circle()
-            .fill(dotColor)
-            .frame(width: size, height: size)
-            .shadow(color: glowColor, radius: 4)
-            .shadow(color: glowColor.opacity(0.6), radius: 10)
-            .opacity(reduceMotion ? 1.0 : phase)
-            .fixedSize()
-            .onAppear { startAnimating() }
-            .onChange(of: status) { _, _ in startAnimating() }
-            .onChange(of: reduceMotion) { _, _ in startAnimating() }
+        ZStack {
+            Circle()
+                .strokeBorder(dotColor.opacity(0.6), lineWidth: 2)
+                .frame(width: size + 10, height: size + 10)
+                .opacity(isMarked ? 1 : 0)
+            Circle()
+                .fill(dotColor)
+                .frame(width: size, height: size)
+                .shadow(color: glowColor, radius: 4)
+                .shadow(color: glowColor.opacity(0.6), radius: 10)
+        }
+        .frame(width: size + 10, height: size + 10)
+        .opacity(reduceMotion ? 1.0 : phase)
+        .fixedSize()
+        .onAppear { startAnimating() }
+        .onChange(of: status) { _, _ in startAnimating() }
+        .onChange(of: reduceMotion) { _, _ in startAnimating() }
+        .onChange(of: isMarked) { _, _ in startAnimating() }
     }
 
     private func startAnimating() {
