@@ -42,7 +42,7 @@ struct SessionListRowView: View {
             } else {
                 Text(displayedName)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(Color(red: 243/255, green: 232/255, blue: 216/255))
+                    .foregroundColor(OcakTheme.text)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startRename() }
             }
@@ -59,8 +59,8 @@ struct SessionListRowView: View {
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? OcakTheme.ember : Color.clear, lineWidth: 1)
-                .shadow(color: isSelected ? OcakTheme.emberGlow : .clear, radius: 9)
+                .stroke(isSelected ? OcakTheme.selectionBorder : Color.clear, lineWidth: 1)
+                .shadow(color: isSelected ? OcakTheme.selectionGlow : .clear, radius: 9)
         )
         .opacity(isDragging ? 0.35 : 1.0)
         .contentShape(Rectangle())

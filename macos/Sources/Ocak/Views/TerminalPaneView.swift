@@ -76,10 +76,7 @@ struct TerminalPaneView: View {
         .frame(height: 48)
         .background(
             LinearGradient(
-                colors: [
-                    Color(red: 1, green: 150/255, blue: 80/255).opacity(0.04),
-                    Color.clear,
-                ],
+                colors: [OcakTheme.cardHeaderOverlay, Color.clear],
                 startPoint: .top,
                 endPoint: .bottom
             )

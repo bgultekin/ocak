@@ -107,7 +107,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func resolvedAppearance() -> NSAppearance {
-        AppearanceConfigStore.shared.effectiveMode == .dark
+        let mode = AppearanceConfigStore.shared.effectiveMode
+        return (mode == .dark || mode == .hearth)
             ? NSAppearance(named: .darkAqua)!
             : NSAppearance(named: .aqua)!
     }

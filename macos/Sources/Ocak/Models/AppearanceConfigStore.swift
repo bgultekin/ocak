@@ -3,15 +3,15 @@ import Observation
 import AppKit
 
 enum AppearanceMode: String, Codable, CaseIterable {
+    case hearth
     case dark
     case light
-    case auto
 
     var displayName: String {
         switch self {
+        case .hearth: return "Hearth"
         case .dark: return "Dark"
         case .light: return "Light"
-        case .auto: return "Auto"
         }
     }
 }
@@ -30,27 +30,11 @@ final class AppearanceConfigStore {
            let mode = AppearanceMode(rawValue: raw) {
             self.mode = mode
         } else {
-            self.mode = .auto
+            self.mode = .hearth
         }
     }
 
-    var effectiveMode: AppearanceMode {
-        switch mode {
-        case .dark, .light:
-            return mode
-        case .auto:
-            return effectiveSystemMode
-        }
-    }
-
-    private var effectiveSystemMode: AppearanceMode {
-        let appearance = NSApp.effectiveAppearance
-        if appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
-            return .dark
-        } else {
-            return .light
-        }
-    }
+    var effectiveMode: AppearanceMode { mode }
 
     func setMode(_ newMode: AppearanceMode) {
         mode = newMode

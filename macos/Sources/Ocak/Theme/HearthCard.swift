@@ -1,25 +1,20 @@
 import AppKit
 import SwiftUI
 
-// MARK: - Warm frosted-glass backing
-// Note: cardBg and cardEdge colors are inlined below rather than referencing OcakTheme
-// to work around a SourceKit scoping issue where Theme/* types aren't resolved in the
-// language server when this file is compiled in isolation. Values must match OcakTheme.
-
-private struct WarmVisualEffectView: NSViewRepresentable {
+private struct ThemedVisualEffectView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSVisualEffectView {
         let v = NSVisualEffectView()
         v.material = .hudWindow
         v.blendingMode = .behindWindow
         v.state = .active
-        v.appearance = NSAppearance(named: .vibrantDark)
+        v.appearance = OcakTheme.visualEffectAppearance
         return v
     }
 
-    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.appearance = OcakTheme.visualEffectAppearance
+    }
 }
-
-// MARK: - Card chrome modifier
 
 struct HearthCardModifier: ViewModifier {
     var radius: CGFloat = 14
@@ -30,24 +25,24 @@ struct HearthCardModifier: ViewModifier {
         content
             .background(
                 ZStack {
-                    WarmVisualEffectView()
-                    (overrideBg ?? Color(red: 20/255, green: 17/255, blue: 13/255).opacity(0.78))
+                    ThemedVisualEffectView()
+                    (overrideBg ?? OcakTheme.cardBg)
                 }
                 .clipShape(RoundedRectangle(cornerRadius: radius))
             )
             .clipShape(RoundedRectangle(cornerRadius: radius))
-            .shadow(color: .black.opacity(0.30), radius: shadowRadius, x: 0, y: shadowRadius * 0.72)
-            .shadow(color: Color(red: 1, green: 200/255, blue: 140/255).opacity(0.08), radius: 0, x: 0, y: 0)
+            .shadow(color: .black.opacity(OcakTheme.isLight ? 0.10 : 0.30),
+                    radius: shadowRadius, x: 0, y: shadowRadius * 0.72)
             .overlay(
                 RoundedRectangle(cornerRadius: radius)
-                    .strokeBorder(Color(red: 1, green: 200/255, blue: 140/255).opacity(0.08), lineWidth: 1)
+                    .strokeBorder(OcakTheme.cardEdge, lineWidth: 1)
                     .overlay(
                         RoundedRectangle(cornerRadius: radius)
                             .inset(by: 0.5)
                             .stroke(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 1, green: 200/255, blue: 140/255).opacity(0.10),
+                                        OcakTheme.cardEdge.opacity(1.25),
                                         Color.clear,
                                     ],
                                     startPoint: .top,

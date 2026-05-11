@@ -298,7 +298,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .frame(maxWidth: 180)
+                    .frame(maxWidth: 280)
                 }
 
                 Text(themeDescription)
@@ -360,12 +360,12 @@ struct SettingsView: View {
 
     private var themeDescription: String {
         switch appearanceMode {
+        case .hearth:
+            return "Warm ember-toned theme designed for Ocak."
         case .dark:
             return "Always use the dark theme."
         case .light:
             return "Always use the light theme."
-        case .auto:
-            return "Use the theme that matches your system settings."
         }
     }
 
