@@ -16,13 +16,18 @@ struct SettingsView: View {
     private let accessibilityPollTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     @Environment(\.colorScheme) private var colorScheme
 
+    private var isHearth: Bool { appearanceMode == .hearth }
+
     var body: some View {
         HStack(spacing: 0) {
             sidebar
             Divider()
+                .background(isHearth ? OcakTheme.divider : Color(nsColor: .separatorColor))
             content
+                .background(isHearth ? OcakTheme.hearthBackground : Color.clear)
         }
         .frame(minWidth: 600, idealWidth: 600, minHeight: 500)
+        .background(isHearth ? OcakTheme.hearthBackground : Color.clear)
         .onReceive(accessibilityPollTimer) { _ in
             accessibilityTrusted = AccessibilityPermission.isTrusted
         }
@@ -31,14 +36,49 @@ struct SettingsView: View {
     // MARK: - Sidebar
 
     private var sidebar: some View {
-        List(selection: $selectedTab) {
-            ForEach(SettingsTab.allCases) { tab in
-                Label(tab.name, systemImage: tab.symbol)
-                    .tag(tab)
+        Group {
+            if isHearth {
+                hearthSidebar
+            } else {
+                List(selection: $selectedTab) {
+                    ForEach(SettingsTab.allCases) { tab in
+                        Label(tab.name, systemImage: tab.symbol)
+                            .tag(tab)
+                    }
+                }
+                .listStyle(.sidebar)
             }
         }
-        .listStyle(.sidebar)
         .frame(width: 150)
+    }
+
+    private var hearthSidebar: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(SettingsTab.allCases) { tab in
+                Button(action: { selectedTab = tab }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: tab.symbol)
+                            .font(.system(size: 13))
+                            .foregroundColor(selectedTab == tab ? OcakTheme.ember : OcakTheme.textDim)
+                            .frame(width: 16, alignment: .center)
+                        Text(tab.name)
+                            .font(.system(size: 13))
+                            .foregroundColor(selectedTab == tab ? OcakTheme.text : OcakTheme.textDim)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        selectedTab == tab ? OcakTheme.rowHighlight : Color.clear,
+                        in: RoundedRectangle(cornerRadius: 6)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
+        }
+        .padding(8)
+        .background(OcakTheme.hearthSidebarBackground)
     }
 
     // MARK: - Content
@@ -65,6 +105,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
                 Text("Launch at login")
+                    .foregroundColor(OcakTheme.text)
                 Spacer()
                 Picker("", selection: Binding(
                     get: { model.launchAtLoginEnabled },
@@ -88,9 +129,11 @@ struct SettingsView: View {
             }
 
             Divider()
+                .background(OcakTheme.divider)
 
             HStack {
                 Text("Automatic updates")
+                    .foregroundColor(OcakTheme.text)
                 Spacer()
                 Picker("", selection: Binding(
                     get: { UpdateService.shared.isAutoUpdateEnabled },
@@ -110,21 +153,23 @@ struct SettingsView: View {
                 if !description.isEmpty {
                     Text(description)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(OcakTheme.textDim)
                 }
             }
 
             Divider()
+                .background(OcakTheme.divider)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Displays")
                     .font(.headline)
+                    .foregroundColor(OcakTheme.text)
                 ForEach(model.availableScreens, id: \.stableKey) { screen in
                     let isChecked = model.screenConfig.isScreenActive(screen)
                     let isLastSelected = isChecked && model.screenConfig.selectedScreenNames.count == 1
                     HStack(spacing: 8) {
                         Image(systemName: "display")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(OcakTheme.textDim)
                             .frame(width: 16)
                         Toggle(isOn: Binding(
                             get: { isChecked },
@@ -161,9 +206,10 @@ struct SettingsView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Hover to reveal")
+                            .foregroundColor(OcakTheme.text)
                         Text("Hover the edge ribbon to open the drawer.")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(OcakTheme.textDim)
                     }
                     Spacer()
                     Toggle("", isOn: Binding(
@@ -176,14 +222,16 @@ struct SettingsView: View {
             }
 
             Divider()
+                .background(OcakTheme.divider)
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Shortcut")
+                            .foregroundColor(OcakTheme.text)
                         Text("Use a keyboard shortcut to toggle the drawer.")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(OcakTheme.textDim)
                     }
                     Spacer()
                     Toggle("", isOn: Binding(
@@ -198,7 +246,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Text("Type")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(OcakTheme.textDim)
                             Spacer()
                             Picker("", selection: Binding(
                                 get: { hotkeyConfig.mode },
@@ -214,7 +262,7 @@ struct SettingsView: View {
                         if hotkeyConfig.mode == .doubleTap {
                             HStack {
                                 Text("Modifier key")
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(OcakTheme.textDim)
                                 Spacer()
                                 Picker("", selection: Binding(
                                     get: { hotkeyConfig.doubleTapModifier },
@@ -232,14 +280,14 @@ struct SettingsView: View {
                         } else {
                             HStack {
                                 Text("Key combination")
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(OcakTheme.textDim)
                                 Spacer()
                                 KeyboardShortcuts.Recorder(for: .togglePanel)
                             }
                         }
                     }
                     .padding(12)
-                    .background(Color(nsColor: .quaternarySystemFill))
+                    .background(isHearth ? OcakTheme.inputBackground : Color(nsColor: .quaternarySystemFill))
                     .cornerRadius(8)
                     .padding(.top, 4)
                 }
@@ -278,9 +326,10 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(screen.localizedName)
                 .font(.body)
+                .foregroundColor(OcakTheme.text)
             Text(String(format: "%.0f × %.0f", screen.frame.width, screen.frame.height))
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(OcakTheme.textDim)
         }
     }
 
@@ -291,6 +340,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Theme")
+                        .foregroundColor(OcakTheme.text)
                     Spacer()
                     Picker("", selection: $appearanceMode) {
                         ForEach(AppearanceMode.allCases, id: \.self) { mode in
@@ -298,19 +348,21 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .frame(maxWidth: 180)
+                    .frame(maxWidth: 280)
                 }
 
                 Text(themeDescription)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(OcakTheme.textDim)
             }
 
             Divider()
+                .background(OcakTheme.divider)
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Terminal Theme")
+                        .foregroundColor(OcakTheme.text)
                     Spacer()
                     Picker("", selection: $terminalThemeMode) {
                         ForEach(TerminalThemeMode.allCases, id: \.self) { mode in
@@ -323,13 +375,15 @@ struct SettingsView: View {
 
                 Text(terminalThemeDescription)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(OcakTheme.textDim)
             }
 
             Divider()
+                .background(OcakTheme.divider)
 
             HStack {
                 Text("Ribbon Style")
+                    .foregroundColor(OcakTheme.text)
                 Spacer()
                 Picker("", selection: $ribbonStyle) {
                     ForEach(RibbonStyle.allCases, id: \.self) { style in
@@ -342,7 +396,7 @@ struct SettingsView: View {
 
             Text(ribbonStyleDescription)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(OcakTheme.textDim)
 
             Spacer()
         }
@@ -360,12 +414,12 @@ struct SettingsView: View {
 
     private var themeDescription: String {
         switch appearanceMode {
+        case .hearth:
+            return "Warm ember-toned theme designed for Ocak."
         case .dark:
             return "Always use the dark theme."
         case .light:
             return "Always use the light theme."
-        case .auto:
-            return "Use the theme that matches your system settings."
         }
     }
 
@@ -403,6 +457,7 @@ struct SettingsView: View {
             )
 
             Divider()
+                .background(OcakTheme.divider)
 
             pluginSection(
                 title: "OpenCode",
@@ -445,10 +500,10 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
                 Circle()
-                    .fill(isInstalled ? .green : .secondary)
+                    .fill(isInstalled ? OcakTheme.done : OcakTheme.textDim)
                     .frame(width: 8, height: 8)
                 Text(isInstalled ? "\(title) — Installed" : "\(title) — Not Installed")
-                    .foregroundColor(isInstalled ? .primary : .secondary)
+                    .foregroundColor(isInstalled ? OcakTheme.text : OcakTheme.textDim)
                 Spacer()
                 if isInstalled {
                     Button("Uninstall", role: .destructive) {
@@ -484,17 +539,18 @@ struct SettingsView: View {
                             Text("Ocak")
                                 .font(.title2)
                                 .fontWeight(.semibold)
+                                .foregroundColor(OcakTheme.text)
                             Text(" · ")
                                 .font(.title3)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(OcakTheme.textDim)
                             Text(versionString)
                                 .font(.callout)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(OcakTheme.textDim)
                         }
 
                         Text("A slide-out terminal drawer for managing AI coding terminals on macOS")
                             .font(.system(size: NSFont.systemFontSize(for: .small) * 1.2))
-                            .foregroundColor(.secondary)
+                            .foregroundColor(OcakTheme.textDim)
 
                         Link(destination: URL(string: "https://github.com/bgultekin/ocak")!) {
                             HStack(spacing: 5) {
@@ -512,7 +568,7 @@ struct SettingsView: View {
 
                         Text("Made with tokens 🤖, no love included 💔")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(OcakTheme.textFaint)
                     }
                     .padding(.top, 4)
                 }
@@ -529,7 +585,7 @@ struct SettingsView: View {
                     Text("System")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(OcakTheme.textDim)
                         .textCase(.uppercase)
 
                     infoRow("macOS", value: macOSVersion)
@@ -540,6 +596,7 @@ struct SettingsView: View {
                 .padding(.vertical, 16)
 
                 Divider()
+                    .background(OcakTheme.divider)
                     .padding(.horizontal, 20)
 
                 // Acknowledgements
@@ -547,7 +604,7 @@ struct SettingsView: View {
                     Text("Acknowledgements")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(OcakTheme.textDim)
                         .textCase(.uppercase)
 
                     infoRow("SwiftTerm", value: "Miguel de Icaza")
@@ -565,10 +622,10 @@ struct SettingsView: View {
     private func infoRow(_ label: String, value: String) -> some View {
         HStack {
             Text(label)
-                .foregroundColor(.secondary)
+                .foregroundColor(OcakTheme.textDim)
             Spacer()
             Text(value)
-                .foregroundColor(.primary)
+                .foregroundColor(OcakTheme.text)
         }
         .font(.callout)
     }

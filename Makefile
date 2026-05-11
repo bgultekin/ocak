@@ -1,12 +1,19 @@
-.PHONY: build build-wrapped run run-watch lint test reset-state
+.PHONY: build build-wrapped run run-watch lint test reset-state sync-assets
 
-build:
+FONTS_SRC := assets/fonts
+FONTS_DST := macos/Sources/Ocak/Resources/Fonts
+
+sync-assets:
+	@mkdir -p $(FONTS_DST)
+	@rsync -a --delete --include='*.ttf' --include='*.otf' --exclude='*' $(FONTS_SRC)/ $(FONTS_DST)/
+
+build: sync-assets
 	swift build --package-path macos
 
-run:
+run: sync-assets
 	swift run --package-path macos
 
-build-wrapped:
+build-wrapped: sync-assets
 	swift build --package-path macos
 	@./scripts/wrap-debug-bundle.sh
 

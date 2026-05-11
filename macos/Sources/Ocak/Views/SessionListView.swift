@@ -11,13 +11,42 @@ extension Image {
         return Image(systemName: "terminal")
     }
 
-    static func ocakTextLogo(colorScheme: ColorScheme) -> Image? {
-        let name = colorScheme == .dark ? "ocak-text-light" : "ocak-text-dark"
-        if let url = Bundle.module.url(forResource: name, withExtension: "png"),
-           let nsImage = NSImage(contentsOf: url) {
-            return Image(nsImage: nsImage)
-        }
-        return nil
+}
+
+private struct FlameIcon: View {
+    @State private var flickering = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Image.ocakIcon(active: true)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(width: 20, height: 20)
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [OcakTheme.flameGradientStart, OcakTheme.flameGradientMid, OcakTheme.flameGradientEnd],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .shadow(color: OcakTheme.flameShadow, radius: 6)
+            .scaleEffect(y: flickering ? 0.96 : 1.0)
+            .opacity(flickering ? 0.92 : 1.0)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                    flickering = true
+                }
+            }
+            .onChange(of: reduceMotion) { _, reduced in
+                if reduced {
+                    flickering = false
+                } else {
+                    withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                        flickering = true
+                    }
+                }
+            }
     }
 }
 
@@ -44,7 +73,6 @@ struct SessionListView: View {
     var onNewSession: (UUID) -> Void
     var onNewGroup: () -> Void
 
-    @Environment(\.colorScheme) private var colorScheme
     @State private var draggedSession: ThreadSession?
     @State private var dropIndicator: DropIndicator?
     @State private var isHeaderNewGroupHovered = false
@@ -57,12 +85,12 @@ struct SessionListView: View {
 
             if UpdateService.shared.availableUpdate != nil {
                 UpdateAvailableBox(service: UpdateService.shared)
-                    .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))
+                    .padding(EdgeInsets(top: 8, leading: 14, bottom: 0, trailing: 14))
             }
 
             if !HookInstaller.isInstalled() || !HookInstaller.isOpenCodeHooksInstalled() {
                 HookSetupBox()
-                    .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))
+                    .padding(EdgeInsets(top: 8, leading: 14, bottom: 0, trailing: 14))
             }
 
             ScrollView {
@@ -112,14 +140,14 @@ struct SessionListView: View {
                             if groupDropIndex == index + 1 {
                                 DropInsertionLine().padding(.vertical, 4)
                             } else if index < groups.count - 1 {
-                                Color.clear.frame(height: 10)
+                                Color.clear.frame(height: 14)
                             }
                         }
                     }
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.id })
                     .animation(.easeInOut(duration: 0.25), value: store.groups.map { $0.order })
                     .animation(.easeInOut(duration: 0.25), value: store.sessions.map { $0.id })
-                    .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 8))
+                    .padding(EdgeInsets(top: 14, leading: 14, bottom: 50, trailing: 14))
                     .onChange(of: store.activeSessionID) { _, newID in
                         if let newID {
                             withAnimation {
@@ -134,36 +162,26 @@ struct SessionListView: View {
     }
 
     private var appHeader: some View {
-        HStack(spacing: 8) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(OcakTheme.buttonBackground)
-                Image.ocakIcon(active: true)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
-            }
-            .frame(width: 26, height: 26)
+        HStack(spacing: 10) {
+            FlameIcon()
 
-            if let logo = Image.ocakTextLogo(colorScheme: colorScheme) {
-                logo
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(height: 16)
-            } else {
-                Text("Ocak")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(OcakTheme.labelPrimary)
-            }
+            Text("Ocak")
+                .font(.custom("InstrumentSerif-Italic", size: 24))
+                .foregroundColor(OcakTheme.text)
+                .kerning(-0.4)
 
             Spacer()
 
             Button(action: onNewGroup) {
                 Image(systemName: "folder.badge.plus")
-                    .font(.system(size: 14))
-                    .foregroundColor(OcakTheme.labelPrimary.opacity(0.8))
+                    .font(.system(size: 13))
+                    .foregroundColor(OcakTheme.textDim)
                     .frame(width: 28, height: 28)
-                    .background(isHeaderNewGroupHovered ? OcakTheme.buttonHoverBackground : OcakTheme.buttonBackground)
+                    .background(isHeaderNewGroupHovered ? OcakTheme.buttonHoverBackground : Color.clear)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 7)
+                            .stroke(OcakTheme.cardEdge, lineWidth: 1)
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: 7))
                     .contentShape(RoundedRectangle(cornerRadius: 7))
             }
@@ -175,10 +193,9 @@ struct SessionListView: View {
             }
         }
         .padding(.horizontal, 16)
-        .frame(height: 64)
-        .background(OcakTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .padding(EdgeInsets(top: 8, leading: 0, bottom: 0, trailing: 8))
+        .padding(.vertical, 14)
+        .hearthCard(shadowRadius: 10)
+        .padding(EdgeInsets(top: 12, leading: 14, bottom: 0, trailing: 14))
     }
 }
 
@@ -422,9 +439,8 @@ struct SessionGroupListView: View {
                     .transition(.opacity)
             }
         }
-        .padding(12)
-        .background(groupBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(EdgeInsets(top: 12, leading: 14, bottom: 10, trailing: 14))
+        .hearthCard(radius: 14, shadowRadius: 10)
         .animation(.easeInOut(duration: 0.2), value: isEditingSettings)
         .animation(.easeInOut(duration: 0.2), value: group.isCollapsed)
         .animation(.easeInOut(duration: 0.15), value: isDropTarget)
@@ -468,9 +484,9 @@ struct SessionGroupListView: View {
                 .frame(maxWidth: .infinity)
             } else {
                 Text(group.name.uppercased())
-                    .font(.system(size: 12, weight: .light))
+                    .font(.custom("JetBrainsMono-Medium", size: 10))
                     .foregroundColor(groupTitleColor)
-                    .tracking(1.2)
+                    .tracking(1.6)
                     .lineLimit(1)
                     .onTapGesture(count: 2) { startGroupRename() }
                     .contextMenu { groupContextMenuItems }
@@ -527,16 +543,15 @@ struct SessionGroupListView: View {
                             .foregroundColor(OcakTheme.sectionLabel)
                             .frame(width: 24, height: 24)
                         Text(group.name.uppercased())
-                            .font(.system(size: 12, weight: .light))
+                            .font(.custom("JetBrainsMono-Medium", size: 10))
                             .foregroundColor(OcakTheme.sectionLabel)
-                            .tracking(1.2)
+                            .tracking(1.6)
                         Spacer()
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .frame(width: 260)
-                    .background(OcakTheme.cardBackground)
-                    .cornerRadius(8)
+                    .hearthCard(radius: 10, shadowRadius: 10)
                 }
         }
     }
@@ -742,6 +757,7 @@ struct SessionGroupListView: View {
                     draggedSession: $draggedSession,
                     dropIndicator: $dropIndicator
                 )
+                .padding(EdgeInsets(top: 0, leading: 0, bottom: 6, trailing: 0))
                 .transition(.opacity)
             }
             if dropIndicator?.groupID == group.id && dropIndicator?.index == sessions.count {
@@ -753,16 +769,12 @@ struct SessionGroupListView: View {
     }
 
     private var emptyState: some View {
-        Text("No terminals")
-            .font(.system(size: 11))
-            .foregroundColor(OcakTheme.sectionLabel.opacity(0.5))
+        Text("no terminals")
+            .font(.custom("JetBrainsMono-Regular", size: 11))
+            .italic()
+            .foregroundColor(OcakTheme.textMuted)
             .frame(maxWidth: .infinity, alignment: .center)
-            .padding(.vertical, 8)
-    }
-
-    private var groupBackground: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(OcakTheme.cardBackground)
+            .padding(.vertical, 20)
     }
 
     private var settingsForm: some View {
@@ -1121,9 +1133,10 @@ private struct GroupNameTextField: NSViewRepresentable {
 
     func makeAttrs() -> [NSAttributedString.Key: Any] {
         [
-            .font: NSFont.systemFont(ofSize: 12, weight: .light),
+            .font: NSFont(name: "JetBrainsMono-Medium", size: 10)
+                  ?? NSFont.monospacedSystemFont(ofSize: 10, weight: .medium),
             .foregroundColor: color,
-            .kern: CGFloat(1.2),
+            .kern: CGFloat(1.6),
         ]
     }
 
