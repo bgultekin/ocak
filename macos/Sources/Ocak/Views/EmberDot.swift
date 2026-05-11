@@ -38,14 +38,23 @@ struct EmberDot: View {
     var body: some View {
         ZStack {
             Circle()
-                .strokeBorder(dotColor.opacity(0.6), lineWidth: 2)
+                .strokeBorder(dotColor, lineWidth: 1.5)
                 .frame(width: size + 10, height: size + 10)
+                .brightness(0.2)
                 .opacity(isMarked ? 1 : 0)
             Circle()
                 .fill(dotColor)
                 .frame(width: size, height: size)
                 .shadow(color: glowColor, radius: 4)
                 .shadow(color: glowColor.opacity(0.6), radius: 10)
+            if isMarked {
+                Rectangle()
+                    .fill(dotColor)
+                    .frame(width: 1.5, height: size + 10)
+                    .brightness(0.2)
+                    .rotationEffect(.degrees(45))
+                    .allowsHitTesting(false)
+            }
         }
         .frame(width: size + 10, height: size + 10)
         .opacity(reduceMotion ? 1.0 : phase)
