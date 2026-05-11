@@ -212,6 +212,18 @@ enum OcakTheme {
     static var controlAccent: Color  { ember }
     static var control: Color        { cardBg }
 
+    // MARK: - Hearth window backgrounds
+
+    static let hearthBackground        = Color(hex: 0x0C0A08)
+    static let hearthSidebarBackground = Color(hex: 0x100D0A)
+
+    // MARK: - Flame icon gradient (app header, always warm fire colors)
+
+    static let flameGradientStart = Color(hex: 0xFFD28A)
+    static let flameGradientMid   = Color(hex: 0xFF7A3A)
+    static let flameGradientEnd   = Color(hex: 0xC9492A)
+    static let flameShadow        = Color(hex: 0xFF7A3A).opacity(0.55)
+
     // MARK: - Selected terminal row (always Hearth ember, across all themes)
 
     static let selectionBorder = Color(hex: 0xFF7A3A)

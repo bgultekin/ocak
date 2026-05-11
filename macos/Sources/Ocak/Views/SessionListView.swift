@@ -24,18 +24,27 @@ private struct FlameIcon: View {
             .frame(width: 20, height: 20)
             .foregroundStyle(
                 LinearGradient(
-                    colors: [Color(hex: 0xFFD28A), Color(hex: 0xFF7A3A), Color(hex: 0xC9492A)],
+                    colors: [OcakTheme.flameGradientStart, OcakTheme.flameGradientMid, OcakTheme.flameGradientEnd],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             )
-            .shadow(color: Color(hex: 0xFF7A3A).opacity(0.55), radius: 6)
+            .shadow(color: OcakTheme.flameShadow, radius: 6)
             .scaleEffect(y: flickering ? 0.96 : 1.0)
             .opacity(flickering ? 0.92 : 1.0)
             .onAppear {
                 guard !reduceMotion else { return }
                 withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
                     flickering = true
+                }
+            }
+            .onChange(of: reduceMotion) { _, reduced in
+                if reduced {
+                    flickering = false
+                } else {
+                    withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) {
+                        flickering = true
+                    }
                 }
             }
     }

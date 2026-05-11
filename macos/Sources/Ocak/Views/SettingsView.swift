@@ -24,10 +24,10 @@ struct SettingsView: View {
             Divider()
                 .background(isHearth ? OcakTheme.divider : Color(nsColor: .separatorColor))
             content
-                .background(isHearth ? Color(hex: 0x0C0A08) : Color.clear)
+                .background(isHearth ? OcakTheme.hearthBackground : Color.clear)
         }
         .frame(minWidth: 600, idealWidth: 600, minHeight: 500)
-        .background(isHearth ? Color(hex: 0x0C0A08) : Color.clear)
+        .background(isHearth ? OcakTheme.hearthBackground : Color.clear)
         .onReceive(accessibilityPollTimer) { _ in
             accessibilityTrusted = AccessibilityPermission.isTrusted
         }
@@ -78,7 +78,7 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(8)
-        .background(Color(hex: 0x100D0A))
+        .background(OcakTheme.hearthSidebarBackground)
     }
 
     // MARK: - Content
