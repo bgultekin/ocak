@@ -35,7 +35,7 @@ struct TerminalPaneView: View {
                 .background(OcakTheme.termBg)
             }
             .hearthCard(radius: 14, overrideBg: OcakTheme.termBg, shadowRadius: 10)
-            .padding(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 0))
+            .padding(EdgeInsets(top: 12, leading: 16, bottom: 8, trailing: 0))
         } else {
             emptyState
         }
