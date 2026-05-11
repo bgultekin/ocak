@@ -14,6 +14,11 @@ APP_VERSION="${APP_VERSION:-0.1.0}"
 # Must be passed explicitly in CI; local builds get 1.
 APP_BUILD="${APP_BUILD:-1}"
 
+echo "Syncing assets..."
+FONTS_DST="$SPM_DIR/Sources/Ocak/Resources/Fonts"
+mkdir -p "$FONTS_DST"
+rsync -a --delete --include='*.ttf' --include='*.otf' --exclude='*' "$REPO_ROOT/assets/fonts/" "$FONTS_DST/"
+
 echo "Building release binaries for Apple Silicon and Intel..."
 cd "$SPM_DIR"
 
