@@ -47,9 +47,9 @@ struct EmberDot: View {
                 .frame(width: size, height: size)
                 .shadow(color: glowColor, radius: 4)
                 .shadow(color: glowColor.opacity(0.6), radius: 10)
+                .opacity(reduceMotion ? 1.0 : phase)
         }
         .frame(width: size + 10, height: size + 10)
-        .opacity(reduceMotion ? 1.0 : phase)
         .fixedSize()
         .onAppear { startAnimating() }
         .onChange(of: status) { _, _ in startAnimating() }

@@ -42,8 +42,12 @@ struct SessionListRowView: View {
             } else {
                 Text(displayedName)
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(OcakTheme.text)
+                    .foregroundColor(session.isMarked ? OcakTheme.cardBg : OcakTheme.text)
                     .lineLimit(1)
+                    .padding(session.isMarked ? EdgeInsets(top: 1, leading: 3, bottom: 1, trailing: 3) : EdgeInsets())
+                    .background(session.isMarked ? OcakTheme.text.opacity(0.9) : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .padding(.leading, session.isMarked ? -3 : 0)
                     .onTapGesture(count: 2) { startRename() }
             }
 
