@@ -17,6 +17,8 @@
 [![Status](https://img.shields.io/badge/status-early-yellow)](#)
 [![GitHub Release](https://img.shields.io/github/v/release/bgultekin/ocak)](https://github.com/bgultekin/ocak/releases/latest)
 
+[![Download for macOS](https://img.shields.io/badge/macOS-Download-blue?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/bgultekin/ocak/releases/latest/download/Ocak.dmg)
+
 
 <sub>Made with tokens 🤖, no love included 💔</sub>
 
