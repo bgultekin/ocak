@@ -101,12 +101,10 @@ struct ResizeHandle: NSViewRepresentable {
 
         override func mouseEntered(with event: NSEvent) {
             isHovering = true
-            updateAppearance()
         }
 
         override func mouseExited(with event: NSEvent) {
             isHovering = false
-            updateAppearance()
         }
 
         override func mouseDown(with event: NSEvent) {
@@ -144,20 +142,7 @@ struct ResizeHandle: NSViewRepresentable {
             }
             isDragging = false
             isHovering = false
-            updateAppearance()
             onEnd()
-        }
-
-        private func updateAppearance() {
-            layer?.backgroundColor = (isHovering || isDragging)
-                ? NSColor.white.withAlphaComponent(0.08).cgColor
-                : NSColor.clear.cgColor
-        }
-
-        override func makeBackingLayer() -> CALayer {
-            let layer = CALayer()
-            layer.backgroundColor = NSColor.clear.cgColor
-            return layer
         }
     }
 }

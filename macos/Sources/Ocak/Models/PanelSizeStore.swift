@@ -15,11 +15,9 @@ final class PanelSizeStore {
     /// Terminal pane max height is 90% of the screen's visible height (computed dynamically).
     static let maxTerminalPaneHeightFraction: CGFloat = 0.95
 
-    static let sessionListLeadingPad: CGFloat = 8
-    /// Fixed chrome: terminal resize handle (6) + session-list leading pad + session-list resize handle (6)
-    static let terminalChrome: CGFloat = 6 + sessionListLeadingPad + 6
-    /// Fixed chrome: session-list leading pad + session-list resize handle (6)
-    static let sessionListChrome: CGFloat = sessionListLeadingPad + 6
+    static let sessionListLeadingPad: CGFloat = 0
+    static let terminalChrome: CGFloat = 0
+    static let sessionListChrome: CGFloat = 0
 
     private(set) var sessionListWidth: CGFloat = defaultSessionList
     private(set) var terminalWidth: CGFloat = defaultTerminal

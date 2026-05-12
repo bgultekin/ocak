@@ -66,52 +66,53 @@ struct DrawerView: View {
             onEnd: {}
         )
 
-        HStack(spacing: 0) {
-            if edge == .right { terminalResizeHandle }
-
-            VStack(spacing: 0) {
-                TerminalPaneView(
-                    session: store.activeSession,
-                    groupName: store.activeSession.flatMap { session in
-                        store.groups.first { $0.id == session.groupID }?.name
-                    },
-                    groupDirectory: store.activeSession.flatMap { session in
-                        store.groups.first { $0.id == session.groupID }?.directory
-                    },
-                    groupOpenInVSCode: store.activeSession.flatMap { session in
-                        store.groups.first { $0.id == session.groupID }
-                    }?.openInVSCode ?? false,
-                    initialCommand: store.activeSession.flatMap { session in
-                        store.groups.first { $0.id == session.groupID }?.initialCommand
-                    },
-                    onStatusChange: { id, status in
-                        store.updateStatus(id, status: status)
-                    },
-                    onDirectoryChange: { id, dir in
-                        store.updateDirectory(id, directory: dir)
-                    },
-                    onClose: {
-                        onCloseTerminal?()
-                    }
-                )
-                .frame(width: panelSizeStore.terminalWidth)
-                .frame(maxHeight: .infinity)
-
-                ResizeHandle(
-                    axis: .vertical,
-                    size: 6,
-                    onDragStart: { terminalHeightDragStart = panelSizeStore.terminalPaneHeight },
-                    onDrag: { [panelSizeStore] deltaY in
-                        // In macOS coords: dragging down = negative deltaY = taller
-                        let newHeight = terminalHeightDragStart - deltaY
-                        panelSizeStore.updateTerminalPaneHeight(newHeight, for: currentScreen)
-                    },
-                    onEnd: {}
-                )
-                .frame(width: panelSizeStore.terminalWidth, height: 6)
+        VStack(spacing: 0) {
+            TerminalPaneView(
+                session: store.activeSession,
+                groupName: store.activeSession.flatMap { session in
+                    store.groups.first { $0.id == session.groupID }?.name
+                },
+                groupDirectory: store.activeSession.flatMap { session in
+                    store.groups.first { $0.id == session.groupID }?.directory
+                },
+                groupOpenInVSCode: store.activeSession.flatMap { session in
+                    store.groups.first { $0.id == session.groupID }
+                }?.openInVSCode ?? false,
+                initialCommand: store.activeSession.flatMap { session in
+                    store.groups.first { $0.id == session.groupID }?.initialCommand
+                },
+                onStatusChange: { id, status in
+                    store.updateStatus(id, status: status)
+                },
+                onDirectoryChange: { id, dir in
+                    store.updateDirectory(id, directory: dir)
+                },
+                onClose: {
+                    onCloseTerminal?()
+                }
+            )
+            .frame(width: panelSizeStore.terminalWidth)
+            .frame(maxHeight: .infinity)
+            .overlay(alignment: edge == .right ? .leading : .trailing) {
+                terminalResizeHandle
+                    .frame(width: 6)
+                    .frame(maxHeight: .infinity)
+                    .padding(.leading, edge == .right ? 16 : 0)
+                    .padding(.trailing, edge == .left ? 16 : 0)
             }
 
-            if edge == .left { terminalResizeHandle }
+            ResizeHandle(
+                axis: .vertical,
+                size: 6,
+                onDragStart: { terminalHeightDragStart = panelSizeStore.terminalPaneHeight },
+                onDrag: { [panelSizeStore] deltaY in
+                    // In macOS coords: dragging down = negative deltaY = taller
+                    let newHeight = terminalHeightDragStart - deltaY
+                    panelSizeStore.updateTerminalPaneHeight(newHeight, for: currentScreen)
+                },
+                onEnd: {}
+            )
+            .frame(width: panelSizeStore.terminalWidth, height: 6)
         }
         .frame(height: panelSizeStore.terminalPaneHeight)
         .transition(.fadeFromBelow)
@@ -132,8 +133,6 @@ struct DrawerView: View {
             onEnd: {}
         )
 
-        if edge == .right { sessionResizeHandle.padding(.leading, PanelSizeStore.sessionListLeadingPad) }
-
         SessionListView(
             store: store,
             width: panelSizeStore.sessionListWidth,
@@ -147,8 +146,13 @@ struct DrawerView: View {
             },
             onNewGroup: onNewGroup
         )
-
-        if edge == .left { sessionResizeHandle.padding(.trailing, PanelSizeStore.sessionListLeadingPad) }
+        .overlay(alignment: edge == .right ? .leading : .trailing) {
+            sessionResizeHandle
+                .frame(width: 6)
+                .frame(maxHeight: .infinity)
+                .padding(.leading, edge == .right ? 14 : 0)
+                .padding(.trailing, edge == .left ? 14 : 0)
+        }
     }
 
     @ViewBuilder
