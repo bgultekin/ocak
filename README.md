@@ -152,12 +152,6 @@ AppDelegate ── orchestrates panels, shortcut, hook server
 
 For a full breakdown of modules, stores, and conventions, see [`AGENTS.md`](AGENTS.md).
 
-## Roadmap
-
-- Windows client (will be living under `windows/`)
-- Linux support under consideration
-- Support for other coding agents beyond Claude Code and OpenCode
-
 ## Acknowledgements
 
 - [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) by Miguel de Icaza — the terminal emulator that makes the drawer useful.
