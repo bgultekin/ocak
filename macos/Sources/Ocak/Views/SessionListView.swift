@@ -502,16 +502,8 @@ struct SessionGroupListView: View {
 
             Spacer()
 
-            if group.isCollapsed && !isEditingSettings {
-                if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
-                    vsCodeButton(directory: dir)
-                }
-                newSessionButton
-            } else if !isEditingSettings {
-                if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
-                    vsCodeButton(directory: dir)
-                }
-                newSessionButton
+            if !isEditingSettings {
+                trailingButtons
             }
         }
     }
@@ -678,10 +670,19 @@ struct SessionGroupListView: View {
         VSCodeLauncher.open(directory: directory)
     }
 
+    @ViewBuilder private var trailingButtons: some View {
+        if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
+            vsCodeButton(directory: dir)
+        }
+        newSessionButton
+    }
+
     private var newSessionButton: some View {
         Button(action: {
             if group.isCollapsed {
-                store.setGroupCollapsed(group.id, collapsed: false)
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    store.setGroupCollapsed(group.id, collapsed: false)
+                }
             }
             onNewSessionInGroup()
         }) {
@@ -700,13 +701,6 @@ struct SessionGroupListView: View {
                 isNewSessionHovered = hovering
             }
         }
-    }
-
-    private var collapsedTrailing: some View {
-        let count = sessions.count
-        return Text("\(count) terminal\(count == 1 ? "" : "s")")
-            .font(.system(size: 11))
-            .foregroundColor(OcakTheme.sectionLabel.opacity(0.7))
     }
 
     private var groupTitleColor: Color {
