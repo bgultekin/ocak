@@ -506,7 +506,7 @@ struct SessionGroupListView: View {
                 if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
                     vsCodeButton(directory: dir)
                 }
-                collapsedTrailing
+                newSessionButton
             } else if !isEditingSettings {
                 if group.openInVSCode, let dir = group.directory, !dir.isEmpty {
                     vsCodeButton(directory: dir)
@@ -679,7 +679,12 @@ struct SessionGroupListView: View {
     }
 
     private var newSessionButton: some View {
-        Button(action: onNewSessionInGroup) {
+        Button(action: {
+            if group.isCollapsed {
+                store.setGroupCollapsed(group.id, collapsed: false)
+            }
+            onNewSessionInGroup()
+        }) {
             Image(systemName: "plus")
                 .font(.system(size: 16))
                 .foregroundColor(groupTitleColor)
